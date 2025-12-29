@@ -11,18 +11,21 @@ class LlantasImport implements ToCollection
 {
     public function collection(Collection $rows)
     {
-        foreach ($rows as $index => $row) {
-
-            // ======================================
-            // SALTAR ENCABEZADO (fila 0)
-            // ======================================
-            if ($index === 0) continue;
+        foreach ($rows as $row) {
 
             // ======================================
             // COLUMNA A → SKU
             // ======================================
             $sku = trim($row[0] ?? '');
-            if ($sku === '') continue;
+
+            // 🔥 SALTAR FILAS QUE NO SON PRODUCTOS
+            if (
+                $sku === '' ||
+                strtolower($sku) === 'codigo' ||
+                strlen($sku) < 4
+            ) {
+                continue;
+            }
 
             // ======================================
             // COLUMNA B → DESCRIPCIÓN
@@ -44,10 +47,10 @@ class LlantasImport implements ToCollection
             // MARCA DESDE DESCRIPCIÓN
             // ======================================
             $marcas = [
-                'MICHELIN', 'CONTINENTAL', 'PIRELLI', 'BRIDGESTONE',
-                'GOODYEAR', 'YOKOHAMA', 'TOYO', 'HANKOOK',
-                'FIRESTONE', 'BFGOODRICH', 'KUMHO', 'GENERAL',
-                'GUTE', 'AMULET', 'NOVAMAX', 'MILEVER'
+                'MICHELIN','CONTINENTAL','PIRELLI','BRIDGESTONE',
+                'GOODYEAR','YOKOHAMA','TOYO','HANKOOK','FIRESTONE',
+                'BFGOODRICH','KUMHO','GENERAL','GUTE','AMULET',
+                'NOVAMAX','MILEVER'
             ];
 
             $marca = 'GENERICA';
@@ -64,22 +67,24 @@ class LlantasImport implements ToCollection
             $descripcion = trim(preg_replace('/\s+/', ' ', $descripcionRaw));
 
             // ======================================
-            // COLUMNA C → EXISTENCIA (STOCK)
-            // Acepta 20+, 10, etc
+            // COLUMNA C → EXISTENCIA
             // ======================================
             $stockRaw = trim($row[2] ?? '');
             $stock = (int) preg_replace('/[^0-9]/', '', $stockRaw);
 
             // ======================================
             // COLUMNA D → COSTO
+            // (elimina símbolos $ y comas)
             // ======================================
-            $costo = is_numeric($row[3] ?? null) ? (float) $row[3] : 0;
+            $costoRaw = str_replace(['$', ','], '', $row[3] ?? '');
+            $costo = is_numeric($costoRaw) ? (float) $costoRaw : 0;
             if ($costo <= 0) continue;
 
             // ======================================
-            // COLUMNA E → PRECIO ML (PROMOCIÓN)
+            // COLUMNA E → PRECIO ML
             // ======================================
-            $precioML = is_numeric($row[4] ?? null) ? (float) $row[4] : null;
+            $precioRaw = str_replace(['$', ','], '', $row[4] ?? '');
+            $precioML = is_numeric($precioRaw) ? (float) $precioRaw : null;
 
             // ======================================
             // TITLE FAMILY
@@ -110,36 +115,25 @@ class LlantasImport implements ToCollection
         }
     }
 
-    /**
-     * ======================================
-     * CREA / ACTUALIZA PAR Y JUEGO DE 4
-     * ======================================
-     */
     private function syncPaquetes(Llanta $llanta)
     {
-        // -------- PAR --------
+        // PAR
         ProductoCompuesto::updateOrCreate(
+            ['llanta_id' => $llanta->id, 'tipo' => 'par'],
             [
-                'llanta_id' => $llanta->id,
-                'tipo'      => 'par',
-            ],
-            [
-                'sku'    => $llanta->sku . '-2',
-                'stock'  => intdiv($llanta->stock, 2),
-                'costo'  => $llanta->costo * 2,
+                'sku'   => $llanta->sku . '-2',
+                'stock' => intdiv($llanta->stock, 2),
+                'costo' => $llanta->costo * 2,
             ]
         );
 
-        // -------- JUEGO DE 4 --------
+        // JUEGO DE 4
         ProductoCompuesto::updateOrCreate(
+            ['llanta_id' => $llanta->id, 'tipo' => 'juego4'],
             [
-                'llanta_id' => $llanta->id,
-                'tipo'      => 'juego4',
-            ],
-            [
-                'sku'    => $llanta->sku . '-4',
-                'stock'  => intdiv($llanta->stock, 4),
-                'costo'  => $llanta->costo * 4,
+                'sku'   => $llanta->sku . '-4',
+                'stock' => intdiv($llanta->stock, 4),
+                'costo' => $llanta->costo * 4,
             ]
         );
     }
