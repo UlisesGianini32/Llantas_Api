@@ -17,6 +17,24 @@
                 </flux:navlist.group>
             </flux:navlist>
 
+            <flux:navlist variant="outline">
+                <flux:navlist.group heading="Inventario" class="grid">
+
+                    <flux:navlist.item
+                        :href="route('llantas.index')"
+                        :current="request()->routeIs('llantas.*')"
+                        wire:navigate>
+                        Llantas
+                    </flux:navlist.item>
+
+                    <flux:navlist.item
+                        :href="route('productos.index')"
+                        :current="request()->routeIs('productos.*')"
+                        wire:navigate>
+                        Productos compuestos
+                    </flux:navlist.item>
+                 </flux:navlist.group>
+            </flux:navlist>
             <flux:spacer />
 
             <flux:navlist variant="outline">

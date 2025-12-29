@@ -3,16 +3,50 @@
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use Livewire\Volt\Volt;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ExcelImportController;
+use App\Http\Controllers\LlantaController;
+use App\Http\Controllers\ProductoCompuestoController;
 
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+Route::middleware('auth')->group(function () {
 
-Route::view('dashboard', 'dashboard')
-    ->middleware(['auth', 'verified'])
-    ->name('dashboard');
+    // DASHBOARD
+    Route::get('/dashboard', [DashboardController::class, 'index'])
+        ->name('dashboard');
 
-Route::middleware(['auth'])->group(function () {
+    // ===============================
+    // LLANTAS (WEB)
+    // ===============================
+    Route::get('/llantas', [LlantaController::class, 'indexWeb'])
+        ->name('llantas.index');
+
+    Route::get('/llantas/{id}/editar', [LlantaController::class, 'editWeb'])
+        ->name('llantas.edit');
+
+    Route::post('/llantas/{id}', [LlantaController::class, 'updateWeb'])
+        ->name('llantas.update');
+
+    // ===============================
+    // PRODUCTOS COMPUESTOS (WEB)
+    // ===============================
+    Route::get('/productos', [ProductoCompuestoController::class, 'indexWeb'])
+        ->name('productos.index');
+
+    Route::get('/productos/{id}/editar', [ProductoCompuestoController::class, 'editWeb'])
+        ->name('productos.edit');
+
+    Route::post('/productos/{id}', [ProductoCompuestoController::class, 'updateWeb'])
+        ->name('productos.update');
+
+    // ===============================
+    // EXCEL
+    // ===============================
+    Route::post('/llantas/importar', [ExcelImportController::class, 'importar'])
+        ->name('llantas.importar');
+
+    // ===============================
+    // SETTINGS (FORTIFY)
+    // ===============================
     Route::redirect('settings', 'settings/profile');
 
     Volt::route('settings/profile', 'settings.profile')->name('profile.edit');
@@ -30,3 +64,8 @@ Route::middleware(['auth'])->group(function () {
         )
         ->name('two-factor.show');
 });
+
+// HOME
+Route::get('/', function () {
+    return view('welcome');
+})->name('home');
