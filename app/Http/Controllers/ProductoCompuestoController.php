@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 
 class ProductoCompuestoController extends Controller
 {
+    protected $table = 'producto_compuestos';
     /* ======================================================
      | API METHODS (JSON)
      |======================================================*/
