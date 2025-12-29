@@ -28,7 +28,7 @@ class DashboardController extends Controller
             // ======================
             'valorInventarioLlantas' => Llanta::sum(DB::raw('costo * stock')),
             'valorInventarioCompuestos' => ProductoCompuesto::sum(
-                DB::raw('costo * piezas')
+                DB::raw('costo * stock')
             ),
 
             // ======================
@@ -83,9 +83,9 @@ class DashboardController extends Controller
             'valores' => [
                 'llantas' => Llanta::sum(DB::raw('costo * stock')),
                 'pares' => ProductoCompuesto::where('tipo', 'par')
-                    ->sum(DB::raw('costo * piezas')),
+                    ->sum(DB::raw('costo * stock')),
                 'juego4' => ProductoCompuesto::where('tipo', 'juego4')
-                    ->sum(DB::raw('costo * piezas')),
+                    ->sum(DB::raw('costo * stock')),
             ],
         ]);
     }
