@@ -18,7 +18,7 @@ class ProductoCompuestoController extends Controller
                 'id' => $c->id,
                 'sku' => $c->sku,
                 'tipo' => $c->tipo,
-                'piezas' => $c->piezas,
+                'stock' => $c->stock,
                 'precio_ML' => $c->precio_ML,
                 'costo' => $c->costo,
                 'stock_disponible' => $c->stock_disponible,

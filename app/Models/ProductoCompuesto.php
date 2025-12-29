@@ -14,7 +14,7 @@ class ProductoCompuesto extends Model
         'sku',
         'descripcion',
         'tipo',
-        'piezas',
+        'stock',
         'costo',
         'precio_ML',
         'title_familyname',
