@@ -19,19 +19,23 @@ return new class extends Migration
               ->constrained('llantas')
               ->cascadeOnDelete();
 
-        // Datos del producto compuesto
+        // Identificación del producto compuesto
         $table->string('sku')->unique();
         $table->string('tipo'); // par | juego4
-        $table->integer('piezas');
 
+        // Cantidad que representa el compuesto (2, 4, etc.)
+        $table->integer('stock');
+
+        // Costos y precios
         $table->decimal('costo', 10, 2);
         $table->decimal('precio_ML', 10, 2)->nullable();
 
-        // Stock calculado para el compuesto
-        $table->integer('stock_disponible')->default(0);
+        // MercadoLibre
+        $table->string('title_familyname')->nullable();
+        $table->string('MLM')->nullable(); // ID publicación MercadoLibre
 
         $table->timestamps();
-        });
+    });
     }
 
     /**
