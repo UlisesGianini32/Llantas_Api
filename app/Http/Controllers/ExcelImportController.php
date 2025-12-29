@@ -10,7 +10,8 @@ class ExcelImportController extends Controller
 {
     public function importar(Request $request)
 {
-    dd('SI ENTRE AL IMPORT'); // 👈 prueba dura
+    dd('IMPORT ENTRÓ', $request->file('archivo')->getClientOriginalName());
 }
+
 
 }
