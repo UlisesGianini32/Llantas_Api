@@ -10,14 +10,15 @@ class ExcelImportController extends Controller
 {
     public function importar(Request $request)
     {
-        $request->validate([
-            'archivo' => 'required|file|mimes:xlsx,xls',
-        ]);
+        dd('SI ENTRO A IMPORTAR', $request->all());
+        //$request->validate([
+            //'archivo' => 'required|file|mimes:xlsx,xls',
+        //]);
 
-        Excel::import(new LlantasImport, $request->file('archivo'));
+        //Excel::import(new LlantasImport, $request->file('archivo'));
 
-        return response()->json([
-            'message' => 'Importación completada correctamente'
-        ]);
+        //return response()->json([
+            //'message' => 'Importación completada correctamente'
+        //]);
     }
 }
