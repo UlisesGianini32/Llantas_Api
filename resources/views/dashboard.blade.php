@@ -144,7 +144,7 @@
                             @empty
                                 <tr>
                                     <td colspan="9" class="px-4 py-6 text-center text-gray-400">
-                                        No se encontraron resultados para ese SKU
+                                        No se encontraron resultados
                                     </td>
                                 </tr>
                             @endforelse
@@ -175,14 +175,25 @@
                     <p class="text-sm font-semibold">Productos compuestos</p>
                 </a>
 
-                <form action="{{ route('llantas.importar') }}" method="POST" enctype="multipart/form-data"
+                {{-- 🔥 IMPORTAR EXCEL (AUTO SUBMIT) --}}
+                <form action="{{ route('llantas.importar') }}"
+                      method="POST"
+                      enctype="multipart/form-data"
                       class="rounded-md border border-neutral-800 bg-neutral-900 px-4 py-3 hover:bg-neutral-800 transition">
                     @csrf
+
                     <label class="cursor-pointer text-sm font-semibold">
                         Importar Excel
-                        <input type="file" name="archivo" hidden required>
+                        <input
+                            type="file"
+                            name="archivo"
+                            required
+                            class="hidden"
+                            onchange="this.form.submit()"
+                        >
                     </label>
                 </form>
+
             </div>
 
         </div>
