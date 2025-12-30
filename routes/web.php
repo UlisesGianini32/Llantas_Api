@@ -9,6 +9,10 @@ use App\Http\Controllers\LlantaController;
 use App\Http\Controllers\ProductoCompuestoController;
 use App\Http\Controllers\ExcelImportController;
 
+Route::get('/importar-test', function () {
+    return view('importar');
+});
+
 
 Route::middleware('auth')->group(function () {
 
