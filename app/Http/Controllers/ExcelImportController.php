@@ -10,12 +10,9 @@ class ExcelImportController extends Controller
 {
     public function importar(Request $request)
 {
-    dd(
-        $request->hasFile('archivo'),
-        $request->file('archivo'),
-        $request->all()
-    );
+    dd($request->all());
 }
+
 
 }
 
