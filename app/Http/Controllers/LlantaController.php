@@ -126,38 +126,38 @@ class LlantaController extends Controller
 
     private function sincronizarCompuestos(Llanta $llanta)
     {
-        // 🔴 borrar siempre
         $llanta->compuestos()->delete();
 
-        // 🚫 sin stock → sin combos
         if ($llanta->stock < 2) {
             return;
         }
 
-        // 🟢 PAR
         ProductoCompuesto::create([
             'llanta_id'        => $llanta->id,
             'sku'              => $llanta->sku . '-2',
             'tipo'             => 'par',
-            'stock'            => 2, // consumo
+            'stock'            => 2,
             'descripcion'      => $llanta->descripcion,
             'title_familyname' => $llanta->title_familyname,
             'costo'            => $llanta->costo * 2,
-            'precio_ML'        => ($llanta->precio_ML ?? 0) * 2,
+            'precio_ML'        => $llanta->precio_ML !== null
+                                    ? $llanta->precio_ML * 2
+                                    : null,
             'MLM'              => $llanta->MLM,
         ]);
 
-        // 🟢 JUEGO DE 4
         if ($llanta->stock >= 4) {
             ProductoCompuesto::create([
                 'llanta_id'        => $llanta->id,
                 'sku'              => $llanta->sku . '-4',
                 'tipo'             => 'juego4',
-                'stock'            => 4, // consumo
+                'stock'            => 4,
                 'descripcion'      => $llanta->descripcion,
                 'title_familyname' => $llanta->title_familyname,
                 'costo'            => $llanta->costo * 4,
-                'precio_ML'        => ($llanta->precio_ML ?? 0) * 4,
+                'precio_ML'        => $llanta->precio_ML !== null
+                                        ? $llanta->precio_ML * 4
+                                        : null,
                 'MLM'              => $llanta->MLM,
             ]);
         }

@@ -28,8 +28,8 @@ class ProductoCompuesto extends Model
     }
 
     /**
-     * stock_disponible = stock real / consumo
-     * nunca divide entre 0
+     * stock_disponible = stock real de la llanta / consumo
+     * 🔒 nunca divide entre 0
      */
     public function getStockDisponibleAttribute()
     {
