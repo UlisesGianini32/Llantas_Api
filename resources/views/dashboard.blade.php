@@ -103,43 +103,15 @@
                         <tbody>
                             @forelse ($stockBajo as $llanta)
                                 <tr class="border-t border-neutral-800 hover:bg-neutral-800">
-
-                                    <td class="px-3 py-2 font-mono text-blue-400">
-                                        {{ $llanta->sku }}
-                                    </td>
-
-                                    <td class="px-3 py-2">
-                                        {{ $llanta->marca ?? 'SIN MARCA' }}
-                                    </td>
-
-                                    <td class="px-3 py-2">
-                                        {{ $llanta->medida ?? 'N/A' }}
-                                    </td>
-
-                                    <td class="px-3 py-2 text-gray-400">
-                                        {{ $llanta->descripcion ?? '—' }}
-                                    </td>
-
-                                    <td class="px-3 py-2 text-right text-gray-300">
-                                        ${{ number_format($llanta->costo, 2) }}
-                                    </td>
-
-                                    <td class="px-3 py-2 text-right text-emerald-400 font-semibold">
-                                        ${{ number_format($llanta->precio_ML, 2) }}
-                                    </td>
-
-                                    <td class="px-3 py-2">
-                                        {{ $llanta->title_familyname }}
-                                    </td>
-
-                                    <td class="px-3 py-2 text-gray-400">
-                                        {{ $llanta->MLM ?? '—' }}
-                                    </td>
-
-                                    <td class="px-3 py-2 text-center font-bold text-red-400">
-                                        {{ $llanta->stock }}
-                                    </td>
-
+                                    <td class="px-3 py-2 font-mono text-blue-400">{{ $llanta->sku }}</td>
+                                    <td class="px-3 py-2">{{ $llanta->marca ?? 'SIN MARCA' }}</td>
+                                    <td class="px-3 py-2">{{ $llanta->medida ?? 'N/A' }}</td>
+                                    <td class="px-3 py-2 text-gray-400">{{ $llanta->descripcion ?? '—' }}</td>
+                                    <td class="px-3 py-2 text-right">${{ number_format($llanta->costo, 2) }}</td>
+                                    <td class="px-3 py-2 text-right text-emerald-400 font-semibold">${{ number_format($llanta->precio_ML, 2) }}</td>
+                                    <td class="px-3 py-2">{{ $llanta->title_familyname }}</td>
+                                    <td class="px-3 py-2 text-gray-400">{{ $llanta->MLM ?? '—' }}</td>
+                                    <td class="px-3 py-2 text-center font-bold text-red-400">{{ $llanta->stock }}</td>
                                 </tr>
                             @empty
                                 <tr>
@@ -175,21 +147,13 @@
                     <p class="text-sm font-semibold">Productos compuestos</p>
                 </a>
 
-                {{-- 🔥 IMPORTAR EXCEL (AUTO SUBMIT) --}}
-                <form action="{{ route('llantas.importar') }}"
-                    method="POST"
-                    enctype="multipart/form-data"
-                    style="background:#222;padding:20px;border:1px solid #555;margin-top:20px;">
+                {{-- ✅ IMPORTAR EXCEL (VA A LA VISTA) --}}
+                <a href="{{ route('excel.vista') }}"
+                   class="rounded-md border border-neutral-800 bg-neutral-900 px-4 py-3 hover:bg-neutral-800 transition">
+                    <p class="text-xs text-gray-400">Inventario</p>
+                    <p class="text-sm font-semibold text-green-400">Importar Excel</p>
+                </a>
 
-                    @csrf
-
-                    <input type="file" name="archivo" required>
-
-                    <button type="submit"
-                            style="background:green;color:white;padding:10px;margin-top:10px;">
-                        PROBAR SUBIDA
-                    </button>
-                </form>
             </div>
 
         </div>

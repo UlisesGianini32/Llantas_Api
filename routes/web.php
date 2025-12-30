@@ -44,8 +44,13 @@ Route::middleware('auth')->group(function () {
     // ===============================
     // EXCEL
     // ===============================
-    Route::post('/llantas/importar', [ExcelImportController::class, 'importar'])
-        ->name('llantas.importar');
+    Route::get('/importar-excel', [ExcelImportController::class, 'vista'])
+        ->name('excel.vista');
+
+    // Acción importar
+    Route::post('/importar-excel', [ExcelImportController::class, 'importar'])
+        ->name('excel.importar');
+
 
     // ===============================
     // SETTINGS (FORTIFY)

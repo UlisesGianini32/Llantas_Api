@@ -34,7 +34,7 @@
         <flux:navlist variant="outline">
             <flux:navlist.group heading="Inventario" class="grid">
 
-                {{-- LLANTAS (puede usar wire:navigate) --}}
+                {{-- LLANTAS --}}
                 <flux:navlist.item
                     :href="route('llantas.index')"
                     :current="request()->routeIs('llantas.*')"
@@ -42,11 +42,18 @@
                     Llantas
                 </flux:navlist.item>
 
-                {{-- PRODUCTOS COMPUESTOS (❌ SIN wire:navigate) --}}
+                {{-- PRODUCTOS COMPUESTOS --}}
                 <flux:navlist.item
                     :href="route('productos.index')"
                     :current="request()->routeIs('productos.*')">
                     Productos compuestos
+                </flux:navlist.item>
+
+                {{-- IMPORTAR EXCEL (NUEVO) --}}
+                <flux:navlist.item
+                    :href="route('excel.vista')"
+                    :current="request()->routeIs('excel.*')">
+                    Importar Excel
                 </flux:navlist.item>
 
             </flux:navlist.group>
