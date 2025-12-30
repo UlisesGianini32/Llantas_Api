@@ -9,9 +9,6 @@ use App\Http\Controllers\ProductoCompuestoController;
 use App\Http\Controllers\ExcelImportController;
 
 
-Route::post('/llantas/importar', [ExcelImportController::class, 'importar'])
-    ->name('llantas.importar');
-
 Route::middleware('auth')->group(function () {
 
     // DASHBOARD
@@ -35,7 +32,7 @@ Route::middleware('auth')->group(function () {
     // ===============================
     Route::get('/productos', [ProductoCompuestoController::class, 'indexWeb'])
         ->name('productos.index');
-        
+
 
     Route::get('/productos/{id}/editar', [ProductoCompuestoController::class, 'editWeb'])
         ->name('productos.edit');
@@ -46,8 +43,8 @@ Route::middleware('auth')->group(function () {
     // ===============================
     // EXCEL
     // ===============================
-    //Route::post('/llantas/importar', [ExcelImportController::class, 'importar'])
-        //->name('llantas.importar');
+    Route::post('/llantas/importar', [ExcelImportController::class, 'importar'])
+        ->name('llantas.importar');
 
     // ===============================
     // SETTINGS (FORTIFY)
