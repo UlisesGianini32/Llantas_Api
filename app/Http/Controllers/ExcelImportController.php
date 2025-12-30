@@ -9,8 +9,16 @@ use Maatwebsite\Excel\Facades\Excel;
 class ExcelImportController extends Controller
 {
     public function importar(Request $request)
-{
-    return redirect()->route('dashboard');
-}
+    {
+        $request->validate([
+            'archivo' => 'required|file|mimes:xlsx,xls',
+        ]);
 
+        Excel::import(new LlantasImport, $request->file('archivo'));
+
+        // 🔥 ESTO ES LO QUE EVITA EL 404
+        return redirect()
+            ->route('dashboard')
+            ->with('success', 'Excel importado correctamente');
+    }
 }
