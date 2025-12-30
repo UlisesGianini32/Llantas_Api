@@ -176,14 +176,14 @@
                 </a>
 
                 {{-- 🔥 IMPORTAR EXCEL (AUTO SUBMIT) --}}
-                <form action="/llantas.importar"
+                <form action="{{ route('llantas.importar') }}"
                     method="POST"
                     enctype="multipart/form-data"
                     style="background:#222;padding:20px;border:1px solid #555;margin-top:20px;">
-                    
+
                     @csrf
 
-                    <input type="file" name="archivo">
+                    <input type="file" name="archivo" required>
 
                     <button type="submit"
                             style="background:green;color:white;padding:10px;margin-top:10px;">
