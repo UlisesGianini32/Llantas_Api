@@ -102,6 +102,7 @@ class LlantaController extends Controller
             'title_familyname' => 'required|string|max:255',
             'precio_ML'        => 'required|numeric|min:0',
             'stock'            => 'required|integer|min:0',
+            'MLM'              => 'nullable|string|max:255', // ✅ NUEVO
         ]);
 
         $llanta->update([
@@ -111,14 +112,17 @@ class LlantaController extends Controller
             'title_familyname' => $request->title_familyname,
             'precio_ML'        => $request->precio_ML,
             'stock'            => $request->stock,
+            'MLM'              => $request->MLM, // ✅ SE GUARDA MLM
         ]);
 
+        // 🔄 Regenera pares y juegos (propaga MLM)
         $this->sincronizarCompuestos($llanta);
 
         return redirect()
             ->route('llantas.index')
             ->with('success', 'Llanta y productos compuestos actualizados');
     }
+
 
     /* ===========================
      | HELPERS
