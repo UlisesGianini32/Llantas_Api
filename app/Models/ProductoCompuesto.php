@@ -14,15 +14,16 @@ class ProductoCompuesto extends Model
         'sku',
         'descripcion',
         'tipo',
-        'stock',
+        'stock', // ← aquí defines cuántas llantas consume
         'costo',
         'precio_ML',
         'title_familyname',
         'MLM',
-        // stock existe en BD pero NO se usa
     ];
 
-    protected $appends = ['stock_disponible'];
+    protected $appends = [
+        'stock_disponible',
+    ];
 
     public function llanta()
     {
@@ -42,20 +43,25 @@ class ProductoCompuesto extends Model
 
             if ($producto->tipo === 'par') {
                 $producto->sku = $llanta->sku . '-2';
+                $producto->stock = 2; // 🔥 CLAVE
             }
 
             if ($producto->tipo === 'juego4') {
                 $producto->sku = $llanta->sku . '-4';
+                $producto->stock = 4; // 🔥 CLAVE
             }
         });
     }
 
     /**
-     * Stock calculado
+     * Stock disponible REAL
      */
     public function getStockDisponibleAttribute()
     {
-        if (!$this->llanta || $this->piezas <= 0) return 0;
-        return intdiv($this->llanta->stock, $this->piezas);
+        if (!$this->llanta || $this->stock <= 0) {
+            return 0;
+        }
+
+        return intdiv($this->llanta->stock, $this->stock);
     }
 }
