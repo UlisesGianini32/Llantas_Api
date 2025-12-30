@@ -7,7 +7,6 @@ use Illuminate\Http\Request;
 
 class ProductoCompuestoController extends Controller
 {
-    protected $table = 'producto_compuestos';
     /* ======================================================
      | API METHODS (JSON)
      |======================================================*/
@@ -24,8 +23,8 @@ class ProductoCompuestoController extends Controller
                 'costo' => $c->costo,
                 'stock_disponible' => $c->stock_disponible,
                 'llanta' => [
-                    'sku' => $c->llanta->sku,
-                    'stock_real' => $c->llanta->stock,
+                    'sku' => $c->llanta->sku ?? null,
+                    'stock_real' => $c->llanta->stock ?? 0,
                 ],
             ];
         });
@@ -73,11 +72,17 @@ class ProductoCompuestoController extends Controller
      | WEB METHODS (BLADE)
      |======================================================*/
 
-    public function indexWeb()
+    public function indexWeb(Request $request)
     {
-        $compuestos = ProductoCompuesto::with('llanta')
-            ->orderBy('id', 'desc')
-            ->paginate(15);
+        $query = ProductoCompuesto::with('llanta')
+            ->orderBy('id', 'desc');
+
+        // 🔍 BÚSQUEDA POR SKU
+        if ($request->filled('search')) {
+            $query->where('sku', 'like', '%' . $request->search . '%');
+        }
+
+        $compuestos = $query->paginate(15)->withQueryString();
 
         return view('compuestos.index', compact('compuestos'));
     }
