@@ -37,30 +37,34 @@
                     @forelse ($compuestos as $compuesto)
                         <tr class="border-t border-neutral-800 hover:bg-neutral-800">
 
+                            {{-- SKU --}}
                             <td class="px-4 py-2 font-mono text-blue-400">
                                 {{ $compuesto->sku }}
                             </td>
 
+                            {{-- Marca (desde llanta) --}}
                             <td class="px-4 py-2">
                                 {{ $compuesto->llanta->marca ?? '—' }}
                             </td>
 
+                            {{-- Medida (desde llanta) --}}
                             <td class="px-4 py-2">
                                 {{ $compuesto->llanta->medida ?? '—' }}
                             </td>
 
+                            {{-- Descripción --}}
                             <td class="px-4 py-2 text-gray-400">
                                 {{ $compuesto->descripcion ?? '—' }}
                             </td>
 
-                            {{-- ✅ COSTO CALCULADO --}}
+                            {{-- ✅ COSTO REAL --}}
                             <td class="px-4 py-2 text-right">
-                                ${{ number_format($compuesto->costo_calculado, 2) }}
+                                ${{ number_format($compuesto->costo_real, 2) }}
                             </td>
 
-                            {{-- ✅ PRECIO ML CALCULADO --}}
+                            {{-- ✅ PRECIO ML REAL --}}
                             <td class="px-4 py-2 text-right text-green-400 font-semibold">
-                                ${{ number_format($compuesto->precio_ml_calculado, 2) }}
+                                ${{ number_format($compuesto->precio_ml_real, 2) }}
                             </td>
 
                             {{-- ✅ TÍTULO REAL --}}
@@ -68,15 +72,17 @@
                                 {{ $compuesto->titulo_real }}
                             </td>
 
+                            {{-- MLM --}}
                             <td class="px-4 py-2 text-xs text-gray-400">
                                 {{ $compuesto->MLM ?? '—' }}
                             </td>
 
-                            {{-- ✅ STOCK DISPONIBLE --}}
+                            {{-- STOCK DISPONIBLE --}}
                             <td class="px-4 py-2 text-center font-semibold">
                                 {{ $compuesto->stock_disponible }}
                             </td>
 
+                            {{-- Acción --}}
                             <td class="px-4 py-2 text-center">
                                 <a href="{{ route('productos.edit', $compuesto->id) }}"
                                    class="text-indigo-400 hover:text-indigo-300">
@@ -97,6 +103,7 @@
         </div>
     </div>
 
+    {{-- PAGINACIÓN --}}
     {{ $compuestos->links() }}
 
 </div>

@@ -12,7 +12,7 @@ class ProductoCompuesto extends Model
         'llanta_id',
         'sku',
         'tipo',
-        'stock',              // consumo: 2 o 4
+        'stock',
         'descripcion',
         'title_familyname',
         'costo',
@@ -20,17 +20,21 @@ class ProductoCompuesto extends Model
         'MLM',
     ];
 
-    protected $appends = ['stock_disponible'];
+    protected $appends = [
+        'stock_disponible',
+        'precio_ml_real',
+        'costo_real',
+        'titulo_real',
+    ];
 
     public function llanta()
     {
         return $this->belongsTo(Llanta::class);
     }
 
-    /**
-     * stock disponible = stock real / consumo
-     * nunca divide entre 0
-     */
+    /* ===========================
+     | STOCK DISPONIBLE
+     |===========================*/
     public function getStockDisponibleAttribute()
     {
         $consumo = (int) $this->stock;
@@ -41,5 +45,45 @@ class ProductoCompuesto extends Model
         }
 
         return intdiv($real, $consumo);
+    }
+
+    /* ===========================
+     | PRECIO ML (editable)
+     |===========================*/
+    public function getPrecioMlRealAttribute()
+    {
+        // 👉 si el usuario editó precio, usarlo
+        if (!is_null($this->precio_ML)) {
+            return $this->precio_ML;
+        }
+
+        // 👉 fallback automático
+        return optional($this->llanta)->precio_ML
+            ? optional($this->llanta)->precio_ML * $this->stock
+            : 0;
+    }
+
+    /* ===========================
+     | COSTO (editable)
+     |===========================*/
+    public function getCostoRealAttribute()
+    {
+        if (!is_null($this->costo)) {
+            return $this->costo;
+        }
+
+        return optional($this->llanta)->costo
+            ? optional($this->llanta)->costo * $this->stock
+            : 0;
+    }
+
+    /* ===========================
+     | TÍTULO REAL
+     |===========================*/
+    public function getTituloRealAttribute()
+    {
+        return $this->title_familyname
+            ?? optional($this->llanta)->title_familyname
+            ?? '—';
     }
 }
