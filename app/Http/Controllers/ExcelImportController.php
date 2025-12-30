@@ -16,7 +16,6 @@ class ExcelImportController extends Controller
 
         Excel::import(new LlantasImport, $request->file('archivo'));
 
-        // 🔥 ESTO ES LO QUE EVITA EL 404
         return redirect()
             ->route('dashboard')
             ->with('success', 'Excel importado correctamente');

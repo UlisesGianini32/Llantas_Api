@@ -4,9 +4,13 @@ use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use Livewire\Volt\Volt;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ExcelImportController;
 use App\Http\Controllers\LlantaController;
 use App\Http\Controllers\ProductoCompuestoController;
+use App\Http\Controllers\ExcelImportController;
+
+
+Route::post('/llantas/importar', [ExcelImportController::class, 'importar'])
+    ->name('llantas.importar');
 
 Route::middleware('auth')->group(function () {
 
@@ -41,8 +45,8 @@ Route::middleware('auth')->group(function () {
     // ===============================
     // EXCEL
     // ===============================
-    Route::post('/llantas/importar', [ExcelImportController::class, 'importar'])
-        ->name('llantas.importar');
+    //Route::post('/llantas/importar', [ExcelImportController::class, 'importar'])
+        //->name('llantas.importar');
 
     // ===============================
     // SETTINGS (FORTIFY)
