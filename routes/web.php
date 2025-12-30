@@ -9,10 +9,6 @@ use App\Http\Controllers\LlantaController;
 use App\Http\Controllers\ProductoCompuestoController;
 use App\Http\Controllers\ExcelImportController;
 
-Route::post('/test-import', function (Request $request) {
-    dd($request->allFiles());
-})->middleware('auth');
-
 
 Route::middleware('auth')->group(function () {
 
