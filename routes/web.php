@@ -25,7 +25,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/llantas/{id}/editar', [LlantaController::class, 'editWeb'])
         ->name('llantas.edit');
 
-    Route::post('/llantas/{id}', [LlantaController::class, 'updateWeb'])
+    Route::put('/llantas/{id}', [LlantaController::class, 'updateWeb'])
         ->name('llantas.update');
 
     // ===============================
