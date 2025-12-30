@@ -7,7 +7,7 @@ use App\Models\Llanta;
 
 class ProductoCompuesto extends Model
 {
-    protected $table = 'productos_compuestos';
+    protected $table = 'producto_compuestos';
 
     protected $fillable = [
         'llanta_id',
