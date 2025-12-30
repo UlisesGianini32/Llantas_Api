@@ -92,9 +92,9 @@ class LlantasImport implements ToCollection
             'descripcion'      => $llanta->descripcion,
             'title_familyname' => $llanta->title_familyname,
             'costo'            => $llanta->costo * 2,
-            'precio_ML'        => $llanta->precio_ML !== null
-                                    ? $llanta->precio_ML * 2
-                                    : null,
+            'precio_ML' => $llanta->precio_ML !== null
+                                ? $llanta->precio_ML * 2
+                                : null,
             'MLM'              => null,
         ]);
 
@@ -108,9 +108,9 @@ class LlantasImport implements ToCollection
                 'descripcion'      => $llanta->descripcion,
                 'title_familyname' => $llanta->title_familyname,
                 'costo'            => $llanta->costo * 4,
-                'precio_ML'        => $llanta->precio_ML !== null
-                                        ? $llanta->precio_ML * 4
-                                        : null,
+                'precio_ML' => $llanta->precio_ML !== null
+                                    ? $llanta->precio_ML * 4
+                                    : null,
                 'MLM'              => null,
             ]);
         }
