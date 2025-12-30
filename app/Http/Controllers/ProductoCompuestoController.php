@@ -18,13 +18,14 @@ class ProductoCompuestoController extends Controller
                 'id' => $c->id,
                 'sku' => $c->sku,
                 'tipo' => $c->tipo,
-                'stock' => $c->stock,
-                'precio_ML' => $c->precio_ML,
-                'costo' => $c->costo,
+                'consumo' => $c->stock, // 👈 consumo
+                'precio_ML_calculado' => $c->precio_ml_calculado,
+                'costo_calculado' => $c->costo_calculado,
                 'stock_disponible' => $c->stock_disponible,
                 'llanta' => [
                     'sku' => $c->llanta->sku ?? null,
                     'stock_real' => $c->llanta->stock ?? 0,
+                    'precio_ML' => $c->llanta->precio_ML ?? 0,
                 ],
             ];
         });
@@ -34,25 +35,26 @@ class ProductoCompuestoController extends Controller
     {
         $compuesto = ProductoCompuesto::findOrFail($id);
 
+        // ✅ Ya no actualizamos costo/precio ML en compuesto (son derivados)
         $request->validate([
-            'precio_ML' => 'sometimes|numeric|min:0',
-            'costo'     => 'sometimes|numeric|min:0',
+            'descripcion'      => 'nullable|string',
+            'title_familyname' => 'nullable|string|max:255',
+            'MLM'              => 'nullable|string|max:255',
         ]);
 
-        $compuesto->update(
-            $request->only([
-                'precio_ML',
-                'costo',
-            ])
-        );
+        $compuesto->update($request->only([
+            'descripcion',
+            'title_familyname',
+            'MLM',
+        ]));
 
         return response()->json([
             'message' => 'Producto compuesto actualizado correctamente',
             'data' => [
                 'id' => $compuesto->id,
                 'sku' => $compuesto->sku,
-                'precio_ML' => $compuesto->precio_ML,
-                'costo' => $compuesto->costo,
+                'precio_ML_calculado' => $compuesto->precio_ml_calculado,
+                'costo_calculado' => $compuesto->costo_calculado,
                 'stock_disponible' => $compuesto->stock_disponible,
             ]
         ]);
@@ -77,7 +79,6 @@ class ProductoCompuestoController extends Controller
         $query = ProductoCompuesto::with('llanta')
             ->orderBy('id', 'desc');
 
-        // 🔍 BÚSQUEDA POR SKU
         if ($request->filled('search')) {
             $query->where('sku', 'like', '%' . $request->search . '%');
         }
@@ -93,40 +94,23 @@ class ProductoCompuestoController extends Controller
         return view('compuestos.edit', compact('compuesto'));
     }
 
-    /**
-     * 🔥 ACTUALIZADO:
-     * - Edita precio del compuesto
-     * - Edita marca, medida, descripcion y título
-     * - ❌ NO toca stock
-     */
     public function updateWeb(Request $request, $id)
     {
         $compuesto = ProductoCompuesto::with('llanta')->findOrFail($id);
 
+        // ✅ NO pedimos precio_ML aquí (ya es calculado)
+        // ✅ marca/medida se editan desde LLANTAS, no desde compuestos
         $request->validate([
-            'precio_ML'        => 'required|numeric|min:0',
-            'marca'            => 'required|string|max:255',
-            'medida'           => 'required|string|max:255',
             'descripcion'      => 'nullable|string',
             'title_familyname' => 'required|string|max:255',
+            'MLM'              => 'nullable|string|max:255',
         ]);
 
-        // 👉 Actualiza compuesto
         $compuesto->update([
-            'precio_ML'        => $request->precio_ML,
             'descripcion'      => $request->descripcion,
             'title_familyname' => $request->title_familyname,
+            'MLM'              => $request->MLM,
         ]);
-
-        // 👉 Actualiza llanta base (SIN tocar stock)
-        if ($compuesto->llanta) {
-            $compuesto->llanta->update([
-                'marca'            => $request->marca,
-                'medida'           => $request->medida,
-                'descripcion'      => $request->descripcion,
-                'title_familyname' => $request->title_familyname,
-            ]);
-        }
 
         return redirect()
             ->route('productos.index')

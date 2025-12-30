@@ -14,15 +14,15 @@ class ProductoCompuesto extends Model
         'sku',
         'descripcion',
         'tipo',
-        'stock', // ← aquí defines cuántas llantas consume
-        'costo',
-        'precio_ML',
+        'stock', // consumo (2 o 4)
         'title_familyname',
         'MLM',
     ];
 
     protected $appends = [
         'stock_disponible',
+        'precio_ml_calculado',
+        'costo_calculado',
     ];
 
     public function llanta()
@@ -41,27 +41,47 @@ class ProductoCompuesto extends Model
             $llanta = Llanta::find($producto->llanta_id);
             if (!$llanta) return;
 
+            // Si no viene stock consumo, lo definimos por tipo
+            if (!$producto->stock) {
+                if ($producto->tipo === 'par') $producto->stock = 2;
+                if ($producto->tipo === 'juego4') $producto->stock = 4;
+            }
+
+            // SKU por tipo
             if ($producto->tipo === 'par') {
                 $producto->sku = $llanta->sku . '-2';
-                $producto->stock = 2; // 🔥 CLAVE
             }
 
             if ($producto->tipo === 'juego4') {
                 $producto->sku = $llanta->sku . '-4';
-                $producto->stock = 4; // 🔥 CLAVE
             }
         });
     }
 
     /**
-     * Stock disponible REAL
+     * Stock disponible (derivado)
      */
     public function getStockDisponibleAttribute()
     {
-        if (!$this->llanta || $this->stock <= 0) {
-            return 0;
-        }
-
+        if (!$this->llanta || $this->stock <= 0) return 0;
         return intdiv($this->llanta->stock, $this->stock);
+    }
+
+    /**
+     * Precio ML calculado (derivado)
+     */
+    public function getPrecioMlCalculadoAttribute()
+    {
+        if (!$this->llanta || !$this->llanta->precio_ML) return 0;
+        return $this->llanta->precio_ML * $this->stock;
+    }
+
+    /**
+     * Costo calculado (derivado)
+     */
+    public function getCostoCalculadoAttribute()
+    {
+        if (!$this->llanta) return 0;
+        return $this->llanta->costo * $this->stock;
     }
 }

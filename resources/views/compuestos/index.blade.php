@@ -5,22 +5,14 @@
     <h1 class="text-2xl font-bold text-white">📦 Productos compuestos</h1>
 
     {{-- 🔍 BUSCADOR POR SKU --}}
-    <form method="GET" action="{{ route('productos.index') }}">
-        <div class="flex gap-2 max-w-md">
-            <input
-                type="text"
-                name="search"
-                value="{{ request('search') }}"
-                placeholder="Buscar por SKU..."
-                class="w-full rounded-md bg-neutral-800 border border-neutral-700 px-4 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring focus:ring-indigo-500"
-            >
-
-            <button
-                type="submit"
-                class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">
-                🔍 Buscar
-            </button>
-        </div>
+    <form method="GET" action="{{ route('productos.index') }}" class="mb-4">
+        <input
+            type="text"
+            name="search"
+            value="{{ request('search') }}"
+            placeholder="Buscar por SKU..."
+            class="w-full rounded-lg bg-neutral-900 border border-neutral-800 px-4 py-2 text-sm text-gray-300 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+        >
     </form>
 
     <div class="rounded-lg bg-neutral-900 border border-neutral-800 overflow-hidden">
@@ -47,30 +39,41 @@
                             <td class="px-4 py-2 font-mono text-blue-400">
                                 {{ $compuesto->sku }}
                             </td>
+
                             <td class="px-4 py-2">
                                 {{ $compuesto->llanta->marca ?? 'SIN MARCA' }}
                             </td>
+
                             <td class="px-4 py-2">
                                 {{ $compuesto->llanta->medida ?? 'N/A' }}
                             </td>
+
                             <td class="px-4 py-2 text-gray-400">
                                 {{ $compuesto->descripcion }}
                             </td>
+
+                            {{-- ✅ COSTO CALCULADO --}}
                             <td class="px-4 py-2 text-right">
-                                ${{ number_format($compuesto->costo, 2) }}
+                                ${{ number_format($compuesto->costo_calculado, 2) }}
                             </td>
+
+                            {{-- ✅ PRECIO ML CALCULADO --}}
                             <td class="px-4 py-2 text-right text-green-400 font-semibold">
-                                ${{ number_format($compuesto->precio_ML, 2) }}
+                                ${{ number_format($compuesto->precio_ml_calculado, 2) }}
                             </td>
+
                             <td class="px-4 py-2">
                                 {{ $compuesto->title_familyname }}
                             </td>
+
                             <td class="px-4 py-2 text-xs text-gray-400">
                                 {{ $compuesto->MLM ?? '—' }}
                             </td>
+
                             <td class="px-4 py-2 text-center font-semibold">
                                 {{ $compuesto->stock_disponible }}
                             </td>
+
                             <td class="px-4 py-2 text-center">
                                 <a href="{{ route('productos.edit', $compuesto->id) }}"
                                    class="text-indigo-400 hover:text-indigo-300">
@@ -90,7 +93,6 @@
         </div>
     </div>
 
-    {{-- PAGINACIÓN --}}
     {{ $compuestos->links() }}
 
 </div>

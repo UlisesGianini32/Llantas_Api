@@ -127,6 +127,9 @@ class LlantaController extends Controller
             'stock'            => $request->stock,
         ]);
 
+        // ✅ NO recalculamos/guardamos precios en compuestos
+        // porque lo haremos dinámico en el model/vista de compuestos
+
         return redirect()
             ->route('llantas.index')
             ->with('success', 'Llanta actualizada correctamente');
@@ -138,13 +141,15 @@ class LlantaController extends Controller
 
     private function crearPaquetes(Llanta $llanta)
     {
+        // ✅ AHORA USAMOS "stock" como CONSUMO (2 y 4)
+        // ✅ Ya NO usamos "piezas"
+        // ✅ Ya NO guardamos costo/precio calculados (se calcula dinámico)
+
         ProductoCompuesto::create([
             'llanta_id'        => $llanta->id,
             'tipo'             => 'par',
-            'piezas'           => 2,
+            'stock'            => 2, // consumo
             'descripcion'      => $llanta->descripcion,
-            'costo'            => $llanta->costo * 2,
-            'precio_ML'        => $llanta->precio_ML ? $llanta->precio_ML * 2 : null,
             'title_familyname' => $llanta->title_familyname,
             'MLM'              => $llanta->MLM,
         ]);
@@ -152,10 +157,8 @@ class LlantaController extends Controller
         ProductoCompuesto::create([
             'llanta_id'        => $llanta->id,
             'tipo'             => 'juego4',
-            'piezas'           => 4,
+            'stock'            => 4, // consumo
             'descripcion'      => $llanta->descripcion,
-            'costo'            => $llanta->costo * 4,
-            'precio_ML'        => $llanta->precio_ML ? $llanta->precio_ML * 4 : null,
             'title_familyname' => $llanta->title_familyname,
             'MLM'              => $llanta->MLM,
         ]);
