@@ -137,9 +137,13 @@ class LlantaController extends Controller
         // 🟢 PAR
         ProductoCompuesto::create([
             'llanta_id'        => $llanta->id,
+            'sku'              => $llanta->sku . '-2',
             'tipo'             => 'par',
-            'stock'            => 2,
+            'stock'            => 2, // consumo
+            'descripcion'      => $llanta->descripcion,
             'title_familyname' => $llanta->title_familyname,
+            'costo'            => $llanta->costo * 2,
+            'precio_ML'        => ($llanta->precio_ML ?? 0) * 2,
             'MLM'              => $llanta->MLM,
         ]);
 
@@ -147,9 +151,13 @@ class LlantaController extends Controller
         if ($llanta->stock >= 4) {
             ProductoCompuesto::create([
                 'llanta_id'        => $llanta->id,
+                'sku'              => $llanta->sku . '-4',
                 'tipo'             => 'juego4',
-                'stock'            => 4,
+                'stock'            => 4, // consumo
+                'descripcion'      => $llanta->descripcion,
                 'title_familyname' => $llanta->title_familyname,
+                'costo'            => $llanta->costo * 4,
+                'precio_ML'        => ($llanta->precio_ML ?? 0) * 4,
                 'MLM'              => $llanta->MLM,
             ]);
         }
