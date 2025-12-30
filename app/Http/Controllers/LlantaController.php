@@ -8,6 +8,10 @@ use Illuminate\Http\Request;
 
 class LlantaController extends Controller
 {
+    /* ===========================
+     | API
+     |===========================*/
+
     public function index()
     {
         return Llanta::with('compuestos')->get();
@@ -58,6 +62,9 @@ class LlantaController extends Controller
             'title_familyname',
         ]));
 
+        // 🔥 RE-SINCRONIZAR COMPUESTOS
+        $this->sincronizarCompuestos($llanta);
+
         return response()->json([
             'message' => 'Llanta actualizada correctamente',
             'data' => $llanta->load('compuestos')
@@ -75,12 +82,14 @@ class LlantaController extends Controller
         ]);
     }
 
+    /* ===========================
+     | WEB
+     |===========================*/
+
     public function indexWeb(Request $request)
     {
-        $search = $request->search;
-
-        $llantas = Llanta::when($search, function ($q) use ($search) {
-                $q->where('sku', 'like', "%{$search}%");
+        $llantas = Llanta::when($request->search, function ($q) use ($request) {
+                $q->where('sku', 'like', "%{$request->search}%");
             })
             ->orderBy('id', 'desc')
             ->paginate(15);
@@ -107,6 +116,7 @@ class LlantaController extends Controller
             'stock'            => 'required|integer|min:0',
         ]);
 
+        // ✅ ACTUALIZA LLANTA
         $llanta->update([
             'marca'            => $request->marca,
             'medida'           => $request->medida,
@@ -116,10 +126,17 @@ class LlantaController extends Controller
             'stock'            => $request->stock,
         ]);
 
+        // 🔥 SINCRONIZA PRODUCTOS COMPUESTOS
+        $this->sincronizarCompuestos($llanta);
+
         return redirect()
             ->route('llantas.index')
-            ->with('success', 'Llanta actualizada correctamente');
+            ->with('success', 'Llanta y productos compuestos actualizados');
     }
+
+    /* ===========================
+     | HELPERS
+     |===========================*/
 
     private function crearPaquetes(Llanta $llanta)
     {
@@ -140,5 +157,17 @@ class LlantaController extends Controller
             'title_familyname' => $llanta->title_familyname,
             'MLM'              => $llanta->MLM,
         ]);
+    }
+
+    /**
+     * 🔥 EL CORAZÓN DEL SISTEMA
+     */
+    private function sincronizarCompuestos(Llanta $llanta)
+    {
+        // eliminar viejos
+        $llanta->compuestos()->delete();
+
+        // recrear correctos
+        $this->crearPaquetes($llanta);
     }
 }

@@ -14,7 +14,7 @@ class ProductoCompuesto extends Model
         'sku',
         'descripcion',
         'tipo',
-        'stock', // consumo
+        'stock', // consumo (2 o 4)
         'title_familyname',
         'MLM',
     ];
@@ -33,29 +33,37 @@ class ProductoCompuesto extends Model
 
     protected static function booted()
     {
-        static::creating(function ($p) {
-            if (!$p->stock) {
-                $p->stock = $p->tipo === 'par' ? 2 : 4;
+        static::creating(function ($producto) {
+
+            // Consumo por tipo
+            if (!$producto->stock) {
+                $producto->stock = $producto->tipo === 'par' ? 2 : 4;
             }
 
-            if (!$p->sku) {
-                $llanta = Llanta::find($p->llanta_id);
-                if ($llanta) {
-                    $p->sku = $llanta->sku . ($p->tipo === 'par' ? '-2' : '-4');
-                }
+            // SKU automático
+            if (empty($producto->sku)) {
+                $llanta = Llanta::find($producto->llanta_id);
+                if (!$llanta) return;
+
+                $producto->sku =
+                    $llanta->sku . ($producto->tipo === 'par' ? '-2' : '-4');
             }
         });
     }
 
+    /* =====================
+     | CALCULADOS
+     |=====================*/
+
     public function getStockDisponibleAttribute()
     {
-        if (!$this->llanta || $this->stock <= 0) return 0;
-        return intdiv($this->llanta->stock, $this->stock);
+        if (!$this->llanta) return 0;
+        return intdiv((int) $this->llanta->stock, (int) $this->stock);
     }
 
     public function getPrecioMlCalculadoAttribute()
     {
-        if (!$this->llanta) return 0;
+        if (!$this->llanta || !$this->llanta->precio_ML) return 0;
         return $this->llanta->precio_ML * $this->stock;
     }
 
