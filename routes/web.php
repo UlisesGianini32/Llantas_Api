@@ -72,3 +72,7 @@ Route::middleware('auth')->group(function () {
         ->name('two-factor.show');
 });
 
+Route::get('/home', function () {
+    return redirect('/dashboard');
+})->name('home');
+
