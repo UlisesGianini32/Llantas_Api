@@ -176,7 +176,7 @@
                 </a>
 
                 {{-- 🔥 IMPORTAR EXCEL (AUTO SUBMIT) --}}
-                <form action="/test-import"
+                <form action="/llantas.importar"
                     method="POST"
                     enctype="multipart/form-data"
                     style="background:#222;padding:20px;border:1px solid #555;margin-top:20px;">
