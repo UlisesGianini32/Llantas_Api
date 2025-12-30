@@ -4,6 +4,25 @@
 
     <h1 class="text-2xl font-bold text-white">📦 Productos compuestos</h1>
 
+    {{-- 🔍 BUSCADOR POR SKU --}}
+    <form method="GET" action="{{ route('productos.index') }}">
+        <div class="flex gap-2 max-w-md">
+            <input
+                type="text"
+                name="search"
+                value="{{ request('search') }}"
+                placeholder="Buscar por SKU..."
+                class="w-full rounded-md bg-neutral-800 border border-neutral-700 px-4 py-2 text-sm text-white placeholder-gray-400 focus:outline-none focus:ring focus:ring-indigo-500"
+            >
+
+            <button
+                type="submit"
+                class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-semibold text-white hover:bg-indigo-500">
+                🔍 Buscar
+            </button>
+        </div>
+    </form>
+
     <div class="rounded-lg bg-neutral-900 border border-neutral-800 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full text-sm text-gray-300">
@@ -23,7 +42,7 @@
                 </thead>
 
                 <tbody>
-                    @foreach ($compuestos as $compuesto)
+                    @forelse ($compuestos as $compuesto)
                         <tr class="border-t border-neutral-800 hover:bg-neutral-800">
                             <td class="px-4 py-2 font-mono text-blue-400">
                                 {{ $compuesto->sku }}
@@ -59,13 +78,21 @@
                                 </a>
                             </td>
                         </tr>
-                    @endforeach
+                    @empty
+                        <tr>
+                            <td colspan="10" class="px-4 py-6 text-center text-gray-400">
+                                No se encontraron productos
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
     </div>
 
+    {{-- PAGINACIÓN --}}
     {{ $compuestos->links() }}
 
 </div>
+
 </x-layouts.app>
