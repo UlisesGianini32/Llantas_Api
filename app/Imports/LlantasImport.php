@@ -13,12 +13,11 @@ class LlantasImport implements ToCollection
     {
         foreach ($rows as $row) {
 
-            // ======================================
+            // =============================
             // COLUMNA A → SKU
-            // ======================================
+            // =============================
             $sku = trim($row[0] ?? '');
 
-            // 🔥 SALTAR FILAS QUE NO SON PRODUCTOS
             if (
                 $sku === '' ||
                 strtolower($sku) === 'codigo' ||
@@ -27,15 +26,15 @@ class LlantasImport implements ToCollection
                 continue;
             }
 
-            // ======================================
+            // =============================
             // COLUMNA B → DESCRIPCIÓN
-            // ======================================
+            // =============================
             $descripcionRaw = trim($row[1] ?? '');
             if ($descripcionRaw === '') continue;
 
-            // ======================================
-            // EXTRAER MEDIDA DESDE DESCRIPCIÓN
-            // ======================================
+            // =============================
+            // EXTRAER MEDIDA
+            // =============================
             preg_match(
                 '/(\d{2,3}\/\d{2,3}[Rr]?\d{2,3})/',
                 $descripcionRaw,
@@ -43,9 +42,9 @@ class LlantasImport implements ToCollection
             );
             $medida = $medidaMatch[0] ?? 'N/A';
 
-            // ======================================
-            // MARCA DESDE DESCRIPCIÓN
-            // ======================================
+            // =============================
+            // MARCA
+            // =============================
             $marcas = [
                 'MICHELIN','CONTINENTAL','PIRELLI','BRIDGESTONE',
                 'GOODYEAR','YOKOHAMA','TOYO','HANKOOK','FIRESTONE',
@@ -61,39 +60,38 @@ class LlantasImport implements ToCollection
                 }
             }
 
-            // ======================================
+            // =============================
             // LIMPIAR DESCRIPCIÓN
-            // ======================================
+            // =============================
             $descripcion = trim(preg_replace('/\s+/', ' ', $descripcionRaw));
 
-            // ======================================
-            // COLUMNA C → EXISTENCIA
-            // ======================================
+            // =============================
+            // COLUMNA C → STOCK REAL
+            // =============================
             $stockRaw = trim($row[2] ?? '');
             $stock = (int) preg_replace('/[^0-9]/', '', $stockRaw);
 
-            // ======================================
+            // =============================
             // COLUMNA D → COSTO
-            // (elimina símbolos $ y comas)
-            // ======================================
+            // =============================
             $costoRaw = str_replace(['$', ','], '', $row[3] ?? '');
             $costo = is_numeric($costoRaw) ? (float) $costoRaw : 0;
             if ($costo <= 0) continue;
 
-            // ======================================
+            // =============================
             // COLUMNA E → PRECIO ML
-            // ======================================
+            // =============================
             $precioRaw = str_replace(['$', ','], '', $row[4] ?? '');
             $precioML = is_numeric($precioRaw) ? (float) $precioRaw : null;
 
-            // ======================================
+            // =============================
             // TITLE FAMILY
-            // ======================================
+            // =============================
             $titleFamily = "{$marca} {$medida}";
 
-            // ======================================
+            // =============================
             // CREAR / ACTUALIZAR LLANTA
-            // ======================================
+            // =============================
             $llanta = Llanta::updateOrCreate(
                 ['sku' => $sku],
                 [
@@ -108,32 +106,45 @@ class LlantasImport implements ToCollection
                 ]
             );
 
-            // ======================================
-            // SINCRONIZAR PRODUCTOS COMPUESTOS
-            // ======================================
+            // =============================
+            // SINCRONIZAR COMPUESTOS
+            // =============================
             $this->syncPaquetes($llanta);
         }
     }
 
+    /**
+     * 🔥 REGLA DE ORO:
+     * - stock <= 0 → NO HAY COMPUESTOS
+     * - stock > 0 → consumo fijo 2 y 4
+     */
     private function syncPaquetes(Llanta $llanta)
     {
-        // PAR
+        // 🔴 Si no hay stock → eliminar compuestos
+        if ((int) $llanta->stock <= 0) {
+            ProductoCompuesto::where('llanta_id', $llanta->id)->delete();
+            return;
+        }
+
+        // 🟢 PAR (consumo 2)
         ProductoCompuesto::updateOrCreate(
             ['llanta_id' => $llanta->id, 'tipo' => 'par'],
             [
-                'sku'   => $llanta->sku . '-2',
-                'stock' => intdiv($llanta->stock, 2),
-                'costo' => $llanta->costo * 2,
+                'stock'            => 2, // 👈 CONSUMO
+                'descripcion'      => $llanta->descripcion,
+                'title_familyname' => $llanta->title_familyname,
+                'MLM'              => $llanta->MLM,
             ]
         );
 
-        // JUEGO DE 4
+        // 🟢 JUEGO DE 4 (consumo 4)
         ProductoCompuesto::updateOrCreate(
             ['llanta_id' => $llanta->id, 'tipo' => 'juego4'],
             [
-                'sku'   => $llanta->sku . '-4',
-                'stock' => intdiv($llanta->stock, 4),
-                'costo' => $llanta->costo * 4,
+                'stock'            => 4, // 👈 CONSUMO
+                'descripcion'      => $llanta->descripcion,
+                'title_familyname' => $llanta->title_familyname,
+                'MLM'              => $llanta->MLM,
             ]
         );
     }

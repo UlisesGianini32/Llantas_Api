@@ -39,11 +39,11 @@ class LlantaController extends Controller
             'stock'            => $request->stock,
         ]);
 
-        $this->crearPaquetes($llanta);
+        $this->sincronizarCompuestos($llanta);
 
         return response()->json([
             'message' => 'Llanta creada correctamente',
-            'data' => $llanta->load('compuestos')
+            'data'    => $llanta->load('compuestos')
         ], 201);
     }
 
@@ -62,9 +62,11 @@ class LlantaController extends Controller
             'title_familyname',
         ]));
 
+        $this->sincronizarCompuestos($llanta);
+
         return response()->json([
             'message' => 'Llanta actualizada correctamente',
-            'data' => $llanta->load('compuestos')
+            'data'    => $llanta->load('compuestos')
         ]);
     }
 
@@ -111,7 +113,6 @@ class LlantaController extends Controller
             'stock'            => $request->stock,
         ]);
 
-        // 🔥 sincroniza correctamente
         $this->sincronizarCompuestos($llanta);
 
         return redirect()
@@ -123,30 +124,39 @@ class LlantaController extends Controller
      | HELPERS
      |===========================*/
 
-    private function crearPaquetes(Llanta $llanta)
+    /**
+     * 🔥 SINCRONIZA CORRECTAMENTE LOS COMPUESTOS
+     */
+    private function sincronizarCompuestos(Llanta $llanta)
     {
+        // 🔴 Borra todo primero
+        $llanta->compuestos()->delete();
+
+        // 🚫 Sin stock suficiente → NO crear combos
+        if ($llanta->stock < 2) {
+            return;
+        }
+
+        // ✅ PAR (consumo 2)
         ProductoCompuesto::create([
             'llanta_id'        => $llanta->id,
             'tipo'             => 'par',
-            'stock'            => 2, // consumo
+            'stock'            => 2,
             'descripcion'      => $llanta->descripcion,
             'title_familyname' => $llanta->title_familyname,
             'MLM'              => $llanta->MLM,
         ]);
 
-        ProductoCompuesto::create([
-            'llanta_id'        => $llanta->id,
-            'tipo'             => 'juego4',
-            'stock'            => 4, // consumo
-            'descripcion'      => $llanta->descripcion,
-            'title_familyname' => $llanta->title_familyname,
-            'MLM'              => $llanta->MLM,
-        ]);
-    }
-
-    private function sincronizarCompuestos(Llanta $llanta)
-    {
-        $llanta->compuestos()->delete();
-        $this->crearPaquetes($llanta);
+        // ✅ JUEGO DE 4 solo si alcanza
+        if ($llanta->stock >= 4) {
+            ProductoCompuesto::create([
+                'llanta_id'        => $llanta->id,
+                'tipo'             => 'juego4',
+                'stock'            => 4,
+                'descripcion'      => $llanta->descripcion,
+                'title_familyname' => $llanta->title_familyname,
+                'MLM'              => $llanta->MLM,
+            ]);
+        }
     }
 }

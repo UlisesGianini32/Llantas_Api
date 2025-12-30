@@ -6,10 +6,12 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProductoCompuesto extends Model
 {
+    protected $table = 'producto_compuestos';
+
     protected $fillable = [
         'llanta_id',
-        'tipo',
-        'stock',
+        'tipo',              // par | juego4
+        'stock',             // consumo (2 o 4)
         'descripcion',
         'title_familyname',
         'MLM',
@@ -23,22 +25,18 @@ class ProductoCompuesto extends Model
     }
 
     /**
-     * 🔥 PROTEGIDO CONTRA DIVISIÓN ENTRE CERO
+     * Stock disponible = stock_real_llanta / consumo
+     * ✅ Nunca divide entre 0
      */
     public function getStockDisponibleAttribute()
     {
-        if (!$this->llanta) {
+        $consumo = (int) $this->stock; // 2 o 4
+        $real = (int) optional($this->llanta)->stock;
+
+        if ($consumo <= 0 || $real <= 0) {
             return 0;
         }
 
-        if ($this->stock <= 0) {
-            return 0;
-        }
-
-        if ($this->llanta->stock <= 0) {
-            return 0;
-        }
-
-        return intdiv($this->llanta->stock, $this->stock);
+        return intdiv($real, $consumo);
     }
 }
