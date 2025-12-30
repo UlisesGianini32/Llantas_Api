@@ -9,10 +9,6 @@ use App\Http\Controllers\LlantaController;
 use App\Http\Controllers\ProductoCompuestoController;
 use App\Http\Controllers\ExcelImportController;
 
-Route::get('/importar-test', function () {
-    return view('importar');
-});
-
 
 Route::middleware('auth')->group(function () {
 
@@ -71,6 +67,11 @@ Route::middleware('auth')->group(function () {
         )
         ->name('two-factor.show');
 });
+
+Route::get('/', function () {
+    return redirect()->route('login');
+});
+
 
 Route::get('/home', function () {
     return redirect('/dashboard');
