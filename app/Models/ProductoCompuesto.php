@@ -14,7 +14,7 @@ class ProductoCompuesto extends Model
         'sku',
         'descripcion',
         'tipo',
-        'stock', // consumo (2 o 4)
+        'stock', // 👈 CONSUMO (2 o 4)
         'title_familyname',
         'MLM',
     ];
@@ -23,6 +23,7 @@ class ProductoCompuesto extends Model
         'stock_disponible',
         'precio_ml_calculado',
         'costo_calculado',
+        'titulo_real',
     ];
 
     public function llanta()
@@ -30,58 +31,62 @@ class ProductoCompuesto extends Model
         return $this->belongsTo(Llanta::class);
     }
 
-    /**
-     * SKU automático
-     */
     protected static function booted()
     {
         static::creating(function ($producto) {
-            if (!empty($producto->sku)) return;
-
-            $llanta = Llanta::find($producto->llanta_id);
-            if (!$llanta) return;
-
-            // Si no viene stock consumo, lo definimos por tipo
+            // set consumo por tipo si no viene
             if (!$producto->stock) {
                 if ($producto->tipo === 'par') $producto->stock = 2;
                 if ($producto->tipo === 'juego4') $producto->stock = 4;
             }
 
-            // SKU por tipo
-            if ($producto->tipo === 'par') {
-                $producto->sku = $llanta->sku . '-2';
-            }
+            // sku autogenerado si no viene
+            if (empty($producto->sku)) {
+                $llanta = Llanta::find($producto->llanta_id);
+                if (!$llanta) return;
 
-            if ($producto->tipo === 'juego4') {
-                $producto->sku = $llanta->sku . '-4';
+                if ($producto->tipo === 'par') $producto->sku = $llanta->sku . '-2';
+                if ($producto->tipo === 'juego4') $producto->sku = $llanta->sku . '-4';
             }
         });
     }
 
-    /**
-     * Stock disponible (derivado)
-     */
+    // ✅ Stock disponible = stock_real / consumo
     public function getStockDisponibleAttribute()
     {
-        if (!$this->llanta || $this->stock <= 0) return 0;
-        return intdiv($this->llanta->stock, $this->stock);
+        if (!$this->llanta) return 0;
+
+        $consumo = (int) ($this->stock ?: 0);
+        if ($consumo <= 0) return 0;
+
+        return intdiv((int)$this->llanta->stock, $consumo);
     }
 
-    /**
-     * Precio ML calculado (derivado)
-     */
     public function getPrecioMlCalculadoAttribute()
     {
         if (!$this->llanta || !$this->llanta->precio_ML) return 0;
-        return $this->llanta->precio_ML * $this->stock;
+
+        $consumo = (int) ($this->stock ?: 0);
+        if ($consumo <= 0) return 0;
+
+        return (float)$this->llanta->precio_ML * $consumo;
     }
 
-    /**
-     * Costo calculado (derivado)
-     */
     public function getCostoCalculadoAttribute()
     {
         if (!$this->llanta) return 0;
-        return $this->llanta->costo * $this->stock;
+
+        $consumo = (int) ($this->stock ?: 0);
+        if ($consumo <= 0) return 0;
+
+        return (float)$this->llanta->costo * $consumo;
+    }
+
+    // ✅ Título real: si compuesto no tiene, usa el de la llanta
+    public function getTituloRealAttribute()
+    {
+        return $this->title_familyname
+            ?? $this->llanta->title_familyname
+            ?? '—';
     }
 }

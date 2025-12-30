@@ -8,10 +8,6 @@ use Illuminate\Http\Request;
 
 class LlantaController extends Controller
 {
-    /* =========================================
-     | API METHODS (JSON)
-     |=========================================*/
-
     public function index()
     {
         return Llanta::with('compuestos')->get();
@@ -79,10 +75,6 @@ class LlantaController extends Controller
         ]);
     }
 
-    /* =========================================
-     | WEB METHODS (BLADE)
-     |=========================================*/
-
     public function indexWeb(Request $request)
     {
         $search = $request->search;
@@ -102,9 +94,6 @@ class LlantaController extends Controller
         return view('llantas.edit', compact('llanta'));
     }
 
-    /**
-     * 🔥 ACTUALIZADO: editar TODOS los campos en web
-     */
     public function updateWeb(Request $request, $id)
     {
         $llanta = Llanta::findOrFail($id);
@@ -127,24 +116,13 @@ class LlantaController extends Controller
             'stock'            => $request->stock,
         ]);
 
-        // ✅ NO recalculamos/guardamos precios en compuestos
-        // porque lo haremos dinámico en el model/vista de compuestos
-
         return redirect()
             ->route('llantas.index')
             ->with('success', 'Llanta actualizada correctamente');
     }
 
-    /* =========================================
-     | HELPERS
-     |=========================================*/
-
     private function crearPaquetes(Llanta $llanta)
     {
-        // ✅ AHORA USAMOS "stock" como CONSUMO (2 y 4)
-        // ✅ Ya NO usamos "piezas"
-        // ✅ Ya NO guardamos costo/precio calculados (se calcula dinámico)
-
         ProductoCompuesto::create([
             'llanta_id'        => $llanta->id,
             'tipo'             => 'par',

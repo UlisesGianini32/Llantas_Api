@@ -4,7 +4,7 @@
 
     <h1 class="text-2xl font-bold text-white">📦 Productos compuestos</h1>
 
-    {{-- 🔍 BUSCADOR POR SKU --}}
+    {{-- 🔍 BUSCADOR POR SKU (mismo diseño que LLANTAS) --}}
     <form method="GET" action="{{ route('productos.index') }}" class="mb-4">
         <input
             type="text"
@@ -52,18 +52,17 @@
                                 {{ $compuesto->descripcion }}
                             </td>
 
-                            {{-- ✅ COSTO CALCULADO --}}
                             <td class="px-4 py-2 text-right">
                                 ${{ number_format($compuesto->costo_calculado, 2) }}
                             </td>
 
-                            {{-- ✅ PRECIO ML CALCULADO --}}
                             <td class="px-4 py-2 text-right text-green-400 font-semibold">
                                 ${{ number_format($compuesto->precio_ml_calculado, 2) }}
                             </td>
 
+                            {{-- ✅ título real (compuesto o llanta) --}}
                             <td class="px-4 py-2">
-                                {{ $compuesto->title_familyname }}
+                                {{ $compuesto->titulo_real }}
                             </td>
 
                             <td class="px-4 py-2 text-xs text-gray-400">
