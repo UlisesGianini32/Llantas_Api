@@ -12,7 +12,6 @@ class ProductoCompuesto extends Model
         'llanta_id',
         'tipo',              // par | juego4
         'stock',             // consumo (2 o 4)
-        'descripcion',
         'title_familyname',
         'MLM',
     ];
@@ -26,12 +25,16 @@ class ProductoCompuesto extends Model
 
     /**
      * Stock disponible = stock_real_llanta / consumo
-     * ✅ Nunca divide entre 0
+     * ✅ Blindado contra ceros
      */
     public function getStockDisponibleAttribute()
     {
-        $consumo = (int) $this->stock; // 2 o 4
-        $real = (int) optional($this->llanta)->stock;
+        if (!$this->llanta) {
+            return 0;
+        }
+
+        $consumo = (int) $this->stock;         // 2 o 4
+        $real    = (int) $this->llanta->stock; // stock real
 
         if ($consumo <= 0 || $real <= 0) {
             return 0;

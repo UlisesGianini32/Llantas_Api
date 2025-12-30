@@ -34,7 +34,7 @@ class LlantaController extends Controller
             'descripcion'      => $request->descripcion ?? 'SIN DESCRIPCIÓN',
             'costo'            => $request->costo,
             'precio_ML'        => $request->precio_ML,
-            'title_familyname' => $request->title_familyname ?? ($request->marca . ' ' . $request->medida),
+            'title_familyname' => $request->title_familyname ?? ($request->marca.' '.$request->medida),
             'MLM'              => $request->MLM,
             'stock'            => $request->stock,
         ]);
@@ -43,7 +43,7 @@ class LlantaController extends Controller
 
         return response()->json([
             'message' => 'Llanta creada correctamente',
-            'data'    => $llanta->load('compuestos')
+            'data'    => $llanta->load('compuestos'),
         ], 201);
     }
 
@@ -66,7 +66,7 @@ class LlantaController extends Controller
 
         return response()->json([
             'message' => 'Llanta actualizada correctamente',
-            'data'    => $llanta->load('compuestos')
+            'data'    => $llanta->load('compuestos'),
         ]);
     }
 
@@ -124,36 +124,31 @@ class LlantaController extends Controller
      | HELPERS
      |===========================*/
 
-    /**
-     * 🔥 SINCRONIZA CORRECTAMENTE LOS COMPUESTOS
-     */
     private function sincronizarCompuestos(Llanta $llanta)
     {
-        // 🔴 Borra todo primero
+        // 🔴 borrar siempre
         $llanta->compuestos()->delete();
 
-        // 🚫 Sin stock suficiente → NO crear combos
+        // 🚫 sin stock → sin combos
         if ($llanta->stock < 2) {
             return;
         }
 
-        // ✅ PAR (consumo 2)
+        // 🟢 PAR
         ProductoCompuesto::create([
             'llanta_id'        => $llanta->id,
             'tipo'             => 'par',
             'stock'            => 2,
-            'descripcion'      => $llanta->descripcion,
             'title_familyname' => $llanta->title_familyname,
             'MLM'              => $llanta->MLM,
         ]);
 
-        // ✅ JUEGO DE 4 solo si alcanza
+        // 🟢 JUEGO DE 4
         if ($llanta->stock >= 4) {
             ProductoCompuesto::create([
                 'llanta_id'        => $llanta->id,
                 'tipo'             => 'juego4',
                 'stock'            => 4,
-                'descripcion'      => $llanta->descripcion,
                 'title_familyname' => $llanta->title_familyname,
                 'MLM'              => $llanta->MLM,
             ]);
