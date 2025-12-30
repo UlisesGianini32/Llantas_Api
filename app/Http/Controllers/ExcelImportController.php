@@ -10,8 +10,7 @@ class ExcelImportController extends Controller
 {
     public function importar(Request $request)
 {
-    dd('IMPORT ENTRÓ', $request->file('archivo')->getClientOriginalName());
+    return redirect()->route('dashboard');
 }
-
 
 }
