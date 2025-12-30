@@ -62,23 +62,9 @@ class LlantaController extends Controller
             'title_familyname',
         ]));
 
-        // 🔥 RE-SINCRONIZAR COMPUESTOS
-        $this->sincronizarCompuestos($llanta);
-
         return response()->json([
             'message' => 'Llanta actualizada correctamente',
             'data' => $llanta->load('compuestos')
-        ]);
-    }
-
-    public function destroy($id)
-    {
-        $llanta = Llanta::findOrFail($id);
-        $llanta->compuestos()->delete();
-        $llanta->delete();
-
-        return response()->json([
-            'message' => 'Llanta eliminada'
         ]);
     }
 
@@ -116,7 +102,6 @@ class LlantaController extends Controller
             'stock'            => 'required|integer|min:0',
         ]);
 
-        // ✅ ACTUALIZA LLANTA
         $llanta->update([
             'marca'            => $request->marca,
             'medida'           => $request->medida,
@@ -126,7 +111,7 @@ class LlantaController extends Controller
             'stock'            => $request->stock,
         ]);
 
-        // 🔥 SINCRONIZA PRODUCTOS COMPUESTOS
+        // 🔥 sincroniza correctamente
         $this->sincronizarCompuestos($llanta);
 
         return redirect()
@@ -159,15 +144,9 @@ class LlantaController extends Controller
         ]);
     }
 
-    /**
-     * 🔥 EL CORAZÓN DEL SISTEMA
-     */
     private function sincronizarCompuestos(Llanta $llanta)
     {
-        // eliminar viejos
         $llanta->compuestos()->delete();
-
-        // recrear correctos
         $this->crearPaquetes($llanta);
     }
 }

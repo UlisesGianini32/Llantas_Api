@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Llanta;
 
 class ProductoCompuesto extends Model
 {
@@ -14,7 +13,7 @@ class ProductoCompuesto extends Model
         'sku',
         'descripcion',
         'tipo',
-        'stock', // 👈 CONSUMO (2 o 4)
+        'stock', // consumo (2 o 4)
         'title_familyname',
         'MLM',
     ];
@@ -23,7 +22,6 @@ class ProductoCompuesto extends Model
         'stock_disponible',
         'precio_ml_calculado',
         'costo_calculado',
-        'titulo_real',
     ];
 
     public function llanta()
@@ -35,62 +33,37 @@ class ProductoCompuesto extends Model
     {
         static::creating(function ($producto) {
 
-            // 🛡️ consumo seguro
-            if (!$producto->stock || $producto->stock <= 0) {
-                $producto->stock = match ($producto->tipo) {
-                    'par'    => 2,
-                    'juego4' => 4,
-                    default  => 1,
-                };
+            if (!$producto->stock) {
+                $producto->stock = $producto->tipo === 'juego4' ? 4 : 2;
             }
 
-            // 🛡️ SKU automático
             if (empty($producto->sku)) {
                 $llanta = Llanta::find($producto->llanta_id);
-                if (!$llanta) return;
-
-                $producto->sku = match ($producto->tipo) {
-                    'par'    => $llanta->sku . '-2',
-                    'juego4' => $llanta->sku . '-4',
-                    default  => $llanta->sku,
-                };
+                if ($llanta) {
+                    $producto->sku = $llanta->sku . ($producto->stock === 4 ? '-4' : '-2');
+                }
             }
         });
     }
 
-    /* ===============================
-     | ATRIBUTOS CALCULADOS (SEGUROS)
-     ===============================*/
-
-    public function getStockDisponibleAttribute(): int
+    public function getStockDisponibleAttribute()
     {
-        if (!$this->llanta) return 0;
+        if (!$this->llanta || $this->stock <= 0) return 0;
 
-        $consumo = max((int)$this->stock, 1);
-        $stockLlanta = max((int)$this->llanta->stock, 0);
-
-        return intdiv($stockLlanta, $consumo);
+        return intdiv((int)$this->llanta->stock, (int)$this->stock);
     }
 
-    public function getPrecioMlCalculadoAttribute(): float
+    public function getPrecioMlCalculadoAttribute()
     {
-        if (!$this->llanta) return 0;
+        if (!$this->llanta || !$this->llanta->precio_ML || $this->stock <= 0) return 0;
 
-        $consumo = max((int)$this->stock, 1);
-        return (float)$this->llanta->precio_ML * $consumo;
+        return (float)$this->llanta->precio_ML * (int)$this->stock;
     }
 
-    public function getCostoCalculadoAttribute(): float
+    public function getCostoCalculadoAttribute()
     {
-        if (!$this->llanta) return 0;
+        if (!$this->llanta || $this->stock <= 0) return 0;
 
-        $consumo = max((int)$this->stock, 1);
-        return (float)$this->llanta->costo * $consumo;
-    }
-
-    public function getTituloRealAttribute(): string
-    {
-        return $this->title_familyname
-            ?: ($this->llanta->title_familyname ?? '—');
+        return (float)$this->llanta->costo * (int)$this->stock;
     }
 }
