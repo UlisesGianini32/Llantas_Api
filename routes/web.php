@@ -72,6 +72,3 @@ Route::middleware('auth')->group(function () {
         ->name('two-factor.show');
 });
 
-Route::get('/llantas/importar-test', function (Request $request) {
-    dd('LLEGUÉ AQUÍ');
-});
