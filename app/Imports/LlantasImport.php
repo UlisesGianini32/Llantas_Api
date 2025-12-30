@@ -13,49 +13,32 @@ class LlantasImport implements ToCollection
     {
         foreach ($rows as $row) {
 
-            // SKU
             $sku = trim($row[0] ?? '');
-            if ($sku === '' || strtolower($sku) === 'codigo' || strlen($sku) < 4) {
+            if ($sku === '' || strtolower($sku) === 'codigo') {
                 continue;
             }
 
-            // Descripción
-            $descripcionRaw = trim($row[1] ?? '');
-            if ($descripcionRaw === '') continue;
+            $descripcion = trim($row[1] ?? '');
+            if ($descripcion === '') continue;
 
-            // Medida
-            preg_match('/(\d{2,3}\/\d{2,3}[Rr]?\d{2,3})/', $descripcionRaw, $m);
+            preg_match('/(\d{2,3}\/\d{2,3}[Rr]?\d{2,3})/', $descripcion, $m);
             $medida = $m[0] ?? 'N/A';
 
-            // Marca
             $marca = 'GENERICA';
-            foreach ([
-                'MICHELIN','CONTINENTAL','PIRELLI','BRIDGESTONE',
-                'GOODYEAR','YOKOHAMA','TOYO','HANKOOK','FIRESTONE'
-            ] as $mrc) {
-                if (stripos($descripcionRaw, $mrc) !== false) {
+            foreach (['MICHELIN','CONTINENTAL','PIRELLI','BRIDGESTONE','GOODYEAR','FIRESTONE'] as $mrc) {
+                if (stripos($descripcion, $mrc) !== false) {
                     $marca = ucfirst(strtolower($mrc));
                     break;
                 }
             }
 
-            $descripcion = trim(preg_replace('/\s+/', ' ', $descripcionRaw));
-
-            // Stock real
             $stock = (int) preg_replace('/[^0-9]/', '', $row[2] ?? 0);
 
-            // Costo
-            $costoRaw = str_replace(['$', ','], '', $row[3] ?? '');
-            $costo = is_numeric($costoRaw) ? (float) $costoRaw : 0;
-            if ($costo <= 0) continue;
-
-            // Precio ML
-            $precioRaw = str_replace(['$', ','], '', $row[4] ?? '');
-            $precioML = is_numeric($precioRaw) ? (float) $precioRaw : null;
+            $costo = (float) str_replace(['$', ','], '', $row[3] ?? 0);
+            $precioML = (float) str_replace(['$', ','], '', $row[4] ?? 0);
 
             $titleFamily = "{$marca} {$medida}";
 
-            // Crear / actualizar llanta
             $llanta = Llanta::updateOrCreate(
                 ['sku' => $sku],
                 [
@@ -66,7 +49,6 @@ class LlantasImport implements ToCollection
                     'costo'            => $costo,
                     'precio_ML'        => $precioML,
                     'title_familyname' => $titleFamily,
-                    'MLM'              => null,
                 ]
             );
 
@@ -76,14 +58,10 @@ class LlantasImport implements ToCollection
 
     private function syncCompuestos(Llanta $llanta)
     {
-        // borrar siempre
         $llanta->compuestos()->delete();
 
-        if ($llanta->stock < 2) {
-            return;
-        }
+        if ($llanta->stock < 2) return;
 
-        // PAR
         ProductoCompuesto::create([
             'llanta_id'        => $llanta->id,
             'sku'              => $llanta->sku . '-2',
@@ -92,13 +70,9 @@ class LlantasImport implements ToCollection
             'descripcion'      => $llanta->descripcion,
             'title_familyname' => $llanta->title_familyname,
             'costo'            => $llanta->costo * 2,
-            'precio_ML' => $llanta->precio_ML !== null
-                                ? $llanta->precio_ML * 2
-                                : null,
-            'MLM'              => null,
+            'precio_ML'        => $llanta->precio_ML * 2,
         ]);
 
-        // JUEGO DE 4
         if ($llanta->stock >= 4) {
             ProductoCompuesto::create([
                 'llanta_id'        => $llanta->id,
@@ -108,10 +82,7 @@ class LlantasImport implements ToCollection
                 'descripcion'      => $llanta->descripcion,
                 'title_familyname' => $llanta->title_familyname,
                 'costo'            => $llanta->costo * 4,
-                'precio_ML' => $llanta->precio_ML !== null
-                                    ? $llanta->precio_ML * 4
-                                    : null,
-                'MLM'              => null,
+                'precio_ML'        => $llanta->precio_ML * 4,
             ]);
         }
     }

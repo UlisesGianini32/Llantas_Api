@@ -10,9 +10,9 @@ class ProductoCompuesto extends Model
 
     protected $fillable = [
         'llanta_id',
-        'sku',              // SKU-2 / SKU-4
-        'tipo',             // par | juego4
-        'stock',            // consumo (2 o 4)
+        'sku',
+        'tipo',
+        'stock',              // consumo: 2 o 4
         'descripcion',
         'title_familyname',
         'costo',
@@ -28,8 +28,8 @@ class ProductoCompuesto extends Model
     }
 
     /**
-     * stock_disponible = stock real de la llanta / consumo
-     * 🔒 nunca divide entre 0
+     * stock disponible = stock real / consumo
+     * nunca divide entre 0
      */
     public function getStockDisponibleAttribute()
     {
