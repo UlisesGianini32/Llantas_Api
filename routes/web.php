@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Features;
 use Livewire\Volt\Volt;
@@ -7,6 +8,10 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LlantaController;
 use App\Http\Controllers\ProductoCompuestoController;
 use App\Http\Controllers\ExcelImportController;
+
+Route::post('/test-import', function (Request $request) {
+    dd($request->allFiles());
+})->middleware('auth');
 
 
 Route::middleware('auth')->group(function () {

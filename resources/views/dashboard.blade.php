@@ -176,21 +176,20 @@
                 </a>
 
                 {{-- 🔥 IMPORTAR EXCEL (AUTO SUBMIT) --}}
-               <form action="{{ route('llantas.importar') }}"
-      method="POST"
-      enctype="multipart/form-data"
-      class="rounded-md border border-neutral-800 bg-neutral-900 px-4 py-3 space-y-2">
-    @csrf
+                <form action="/test-import"
+                    method="POST"
+                    enctype="multipart/form-data"
+                    style="background:#222;padding:20px;border:1px solid #555;margin-top:20px;">
+                    
+                    @csrf
 
-    <input type="file" name="archivo" required
-           class="block text-sm text-gray-300">
+                    <input type="file" name="archivo">
 
-    <button type="submit"
-            class="w-full rounded bg-indigo-600 py-2 text-sm font-semibold hover:bg-indigo-700">
-        Importar Excel
-    </button>
-</form>
-
+                    <button type="submit"
+                            style="background:green;color:white;padding:10px;margin-top:10px;">
+                        PROBAR SUBIDA
+                    </button>
+                </form>
             </div>
 
         </div>
