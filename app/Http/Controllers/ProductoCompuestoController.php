@@ -77,21 +77,42 @@ class ProductoCompuestoController extends Controller
 
     public function updateWeb(Request $request, $id)
     {
-        $compuesto = ProductoCompuesto::findOrFail($id);
+        $compuesto = ProductoCompuesto::with('llanta')->findOrFail($id);
 
         $request->validate([
             'descripcion'      => 'nullable|string',
             'title_familyname' => 'required|string|max:255',
+            'precio_ML'        => 'nullable|numeric|min:0',
             'MLM'              => 'nullable|string|max:255',
+
+            // pertenecen a llanta
+            'marca'            => 'required|string|max:255',
+            'medida'           => 'required|string|max:255',
         ]);
 
-        $compuesto->update($request->only([
-            'descripcion',
-            'title_familyname',
-            'MLM',
-        ]));
+        /* ===========================
+        | ACTUALIZAR PRODUCTO COMPUESTO
+        ===========================*/
+        $compuesto->update([
+            'descripcion'      => $request->descripcion,
+            'title_familyname' => $request->title_familyname,
+            'precio_ML'        => $request->precio_ML,
+            'MLM'              => $request->MLM,
+        ]);
 
-        return redirect()->route('productos.index')
-            ->with('success', 'Producto compuesto actualizado');
+        /* ===========================
+        | ACTUALIZAR LLANTA BASE
+        ===========================*/
+        if ($compuesto->llanta) {
+            $compuesto->llanta->update([
+                'marca'  => $request->marca,
+                'medida' => $request->medida,
+            ]);
+        }
+
+        return redirect()
+            ->route('productos.index')
+            ->with('success', 'Producto compuesto actualizado correctamente');
     }
+
 }

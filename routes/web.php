@@ -34,7 +34,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/productos', [ProductoCompuestoController::class, 'indexWeb'])
         ->name('productos.index');
 
-
     Route::get('/productos/{id}/editar', [ProductoCompuestoController::class, 'editWeb'])
         ->name('productos.edit');
 
