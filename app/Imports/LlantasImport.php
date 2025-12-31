@@ -11,106 +11,89 @@ class LlantasImport implements ToCollection
 {
     public function collection(Collection $rows)
     {
-        // Quitar encabezado
-        $rows->shift();
+        $rows->shift(); // quitar encabezado
 
         foreach ($rows as $row) {
 
-            /*
-             * ESTRUCTURA DEL EXCEL (AJUSTA SI CAMBIA):
-             * 0 => SKU
-             * 1 => Marca
-             * 2 => Medida
-             * 3 => Descripción
-             * 4 => Costo
-             * 5 => Stock
-             */
+            $sku   = trim($row[0] ?? '');
+            $marca = trim($row[1] ?? 'GENERICA');
+            $medida = trim($row[2] ?? 'N/A');
+            $stock = intval($row[3] ?? 0);
+            $costo = floatval($row[4] ?? 0);
+            $descripcion = trim($row[5] ?? 'SIN DESCRIPCIÓN');
 
-            $sku         = trim($row[0] ?? '');
-            $marca       = trim($row[1] ?? 'GENERICA');
-            $medida      = trim($row[2] ?? 'N/A');
-            $descripcion = trim($row[3] ?? 'SIN DESCRIPCIÓN');
-            $costo       = (float) ($row[4] ?? 0);
-            $stock       = (int) ($row[5] ?? 0);
-
-            if (!$sku || $costo <= 0) {
-                continue;
-            }
-
-            /* =====================================================
-             | LLANTA
-             ===================================================== */
+            if (!$sku || $costo <= 0) continue;
 
             $llanta = Llanta::where('sku', $sku)->first();
 
+            /* ===============================
+             | SKU EXISTENTE → SOLO STOCK
+             ===============================*/
             if ($llanta) {
-                // ✅ SI EXISTE → SOLO ACTUALIZA STOCK Y COSTO
                 $llanta->update([
                     'stock' => $stock,
-                    'costo' => $costo,
                 ]);
-            } else {
-                // 🆕 NO EXISTE → CREAR
-                $llanta = Llanta::create([
-                    'sku'              => $sku,
-                    'marca'            => $marca,
-                    'medida'           => $medida,
-                    'descripcion'      => $descripcion,
-                    'costo'            => $costo,
-                    'stock'            => $stock,
-                    'precio_ML'        => $costo * 1.5, // llanta sola
-                    'title_familyname' => "{$marca} {$medida}",
-                ]);
+
+                // ❗ NO recalculamos precios
+                $this->actualizarStockCompuestos($llanta);
+                continue;
             }
 
-            /* =====================================================
-             | PRODUCTOS COMPUESTOS
-             | ⚠️ NO BORRAR / NO SOBREESCRIBIR
-             ===================================================== */
+            /* ===============================
+             | SKU NUEVO → CREAR CON FÓRMULA
+             ===============================*/
+            $llanta = Llanta::create([
+                'sku'              => $sku,
+                'marca'            => $marca,
+                'medida'           => $medida,
+                'descripcion'      => $descripcion,
+                'costo'            => $costo,
+                'stock'            => $stock,
+                'precio_ML'        => $costo * 1.5,
+                'title_familyname' => "$marca $medida",
+            ]);
 
-            if ($stock >= 2) {
-                $this->upsertCompuesto(
-                    $llanta,
-                    2,
-                    ($costo * 2) * 1.4
-                );
-            }
-
-            if ($stock >= 4) {
-                $this->upsertCompuesto(
-                    $llanta,
-                    4,
-                    ($costo * 4) * 1.35
-                );
-            }
+            $this->crearCompuestosIniciales($llanta);
         }
     }
 
-    /* =====================================================
-     | UPSERT PRODUCTO COMPUESTO
-     ===================================================== */
-    private function upsertCompuesto(Llanta $llanta, int $piezas, float $precioCalculado)
+    /* ===============================
+     | SOLO ACTUALIZA STOCK
+     ===============================*/
+    private function actualizarStockCompuestos(Llanta $llanta)
     {
-        $skuCompuesto = $llanta->sku . '-' . $piezas;
+        ProductoCompuesto::where('llanta_id', $llanta->id)
+            ->update(['updated_at' => now()]);
+    }
 
-        $compuesto = ProductoCompuesto::where('sku', $skuCompuesto)->first();
-
-        if ($compuesto) {
-            // ✅ EXISTE → SOLO STOCK (NO PRECIO, NO MLM, NO TITULO)
-            $compuesto->update([
-                'stock' => $piezas,
-            ]);
-        } else {
-            // 🆕 CREAR
+    /* ===============================
+     | CREACIÓN INICIAL CON FÓRMULAS
+     ===============================*/
+    private function crearCompuestosIniciales(Llanta $llanta)
+    {
+        // PAR
+        if ($llanta->stock >= 2) {
             ProductoCompuesto::create([
-                'llanta_id'        => $llanta->id,
-                'sku'              => $skuCompuesto,
-                'tipo'             => $piezas === 2 ? 'par' : 'juego4',
-                'stock'            => $piezas,
-                'descripcion'      => $llanta->descripcion,
-                'title_familyname' => $llanta->title_familyname,
-                'costo'            => $llanta->costo * $piezas,
-                'precio_ML'        => $precioCalculado,
+                'llanta_id'  => $llanta->id,
+                'sku'        => $llanta->sku . '-2',
+                'tipo'       => 'par',
+                'stock'      => 2,
+                'costo'      => $llanta->costo * 2,
+                'precio_ML'  => ($llanta->costo * 2) * 1.4,
+                'descripcion'=> $llanta->descripcion,
+            ]);
+        }
+
+        // JUEGO 4
+        if ($llanta->stock >= 4) {
+            ProductoCompuesto::create([
+                'llanta_id'  => $llanta->id,
+                'sku'        => $llanta->sku . '-4',
+                'tipo'       => 'juego4',
+                'stock'      => 4,
+                'costo'      => $llanta->costo * 4,
+                'precio_ML'  => ($llanta->costo * 4) * 1.35,
+                'descripcion'=> $llanta->descripcion,
             ]);
         }
     }
