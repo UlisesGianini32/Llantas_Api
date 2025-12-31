@@ -34,7 +34,7 @@ class ProductoCompuesto extends Model
 
     /* ===========================
      | STOCK DISPONIBLE
-     |===========================*/
+     ===========================*/
     public function getStockDisponibleAttribute()
     {
         $consumo = (int) $this->stock;
@@ -48,24 +48,24 @@ class ProductoCompuesto extends Model
     }
 
     /* ===========================
-     | PRECIO ML (editable)
-     |===========================*/
+     | PRECIO ML REAL (EDITABLE)
+     ===========================*/
     public function getPrecioMlRealAttribute()
     {
-        // 👉 si el usuario editó precio, usarlo
+        // Si el usuario lo editó manualmente → usarlo
         if (!is_null($this->precio_ML)) {
             return $this->precio_ML;
         }
 
-        // 👉 fallback automático
+        // Fallback automático
         return optional($this->llanta)->precio_ML
             ? optional($this->llanta)->precio_ML * $this->stock
             : 0;
     }
 
     /* ===========================
-     | COSTO (editable)
-     |===========================*/
+     | COSTO REAL
+     ===========================*/
     public function getCostoRealAttribute()
     {
         if (!is_null($this->costo)) {
@@ -79,7 +79,7 @@ class ProductoCompuesto extends Model
 
     /* ===========================
      | TÍTULO REAL
-     |===========================*/
+     ===========================*/
     public function getTituloRealAttribute()
     {
         return $this->title_familyname

@@ -8,51 +8,6 @@ use Illuminate\Http\Request;
 class ProductoCompuestoController extends Controller
 {
     /* ===========================
-     | API
-     ===========================*/
-
-    public function index()
-    {
-        return ProductoCompuesto::with('llanta')->get()->map(function ($c) {
-            return [
-                'id' => $c->id,
-                'sku' => $c->sku,
-                'tipo' => $c->tipo,
-                'consumo' => $c->stock,
-                'stock_disponible' => $c->stock_disponible,
-                'precio_ml' => $c->precio_ml_calculado,
-                'costo' => $c->costo_calculado,
-                'titulo' => $c->titulo_real,
-                'llanta' => [
-                    'sku' => $c->llanta->sku ?? null,
-                    'stock_real' => $c->llanta->stock ?? 0,
-                ],
-            ];
-        });
-    }
-
-    public function update(Request $request, $id)
-    {
-        $compuesto = ProductoCompuesto::findOrFail($id);
-
-        $request->validate([
-            'descripcion'      => 'nullable|string',
-            'title_familyname' => 'nullable|string|max:255',
-            'Precio_ML'        => 'nullable|numeric|min:0',
-            'MLM'              => 'nullable|string|max:255',
-        ]);
-
-        $compuesto->update($request->only([
-            'descripcion',
-            'title_familyname',
-            'precio_ML',
-            'MLM',
-        ]));
-
-        return response()->json(['ok' => true]);
-    }
-
-    /* ===========================
      | WEB
      ===========================*/
 
@@ -71,10 +26,8 @@ class ProductoCompuestoController extends Controller
 
     public function editWeb($id)
     {
-        return view(
-            'compuestos.edit',
-            ['compuesto' => ProductoCompuesto::with('llanta')->findOrFail($id)]
-        );
+        $compuesto = ProductoCompuesto::with('llanta')->findOrFail($id);
+        return view('compuestos.edit', compact('compuesto'));
     }
 
     public function updateWeb(Request $request, $id)
@@ -87,14 +40,14 @@ class ProductoCompuestoController extends Controller
             'precio_ML'        => 'nullable|numeric|min:0',
             'MLM'              => 'nullable|string|max:255',
 
-            // pertenecen a llanta
+            // Datos de la llanta (solo informativos/edición básica)
             'marca'            => 'required|string|max:255',
             'medida'           => 'required|string|max:255',
         ]);
 
         /* ===========================
-        | ACTUALIZAR PRODUCTO COMPUESTO
-        ===========================*/
+         | ACTUALIZAR PRODUCTO COMPUESTO
+         ===========================*/
         $compuesto->update([
             'descripcion'      => $request->descripcion,
             'title_familyname' => $request->title_familyname,
@@ -103,8 +56,8 @@ class ProductoCompuestoController extends Controller
         ]);
 
         /* ===========================
-        | ACTUALIZAR LLANTA BASE
-        ===========================*/
+         | ACTUALIZAR LLANTA BASE
+         ===========================*/
         if ($compuesto->llanta) {
             $compuesto->llanta->update([
                 'marca'  => $request->marca,
@@ -116,5 +69,4 @@ class ProductoCompuestoController extends Controller
             ->route('productos.index')
             ->with('success', 'Producto compuesto actualizado correctamente');
     }
-
 }
