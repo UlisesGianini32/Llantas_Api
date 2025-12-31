@@ -38,12 +38,14 @@ class ProductoCompuestoController extends Controller
         $request->validate([
             'descripcion'      => 'nullable|string',
             'title_familyname' => 'nullable|string|max:255',
+            'Precio_ML'        => 'nullable|numeric|min:0',
             'MLM'              => 'nullable|string|max:255',
         ]);
 
         $compuesto->update($request->only([
             'descripcion',
             'title_familyname',
+            'precio_ML',
             'MLM',
         ]));
 

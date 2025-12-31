@@ -68,12 +68,12 @@
 
         {{-- ✅ MLM --}}
         <div class="mb-4">
-    <label class="text-sm text-gray-400">MLM (Llanta)</label>
-    <input type="text"
-           name="MLM"
-           value="{{ old('MLM', $llanta->MLM) }}"
-           class="w-full rounded bg-neutral-800 p-2 text-white">
-</div>
+            <label class="text-sm text-gray-400">MLM (Llanta)</label>
+            <input type="text"
+                name="MLM"
+                value="{{ old('MLM', $llanta->MLM) }}"
+                class="w-full rounded bg-neutral-800 p-2 text-white">
+        </div>
 
 
         {{-- STOCK --}}

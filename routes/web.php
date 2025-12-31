@@ -37,7 +37,7 @@ Route::middleware('auth')->group(function () {
     Route::get('/productos/{id}/editar', [ProductoCompuestoController::class, 'editWeb'])
         ->name('productos.edit');
 
-    Route::post('/productos/{id}', [ProductoCompuestoController::class, 'updateWeb'])
+    Route::put('/productos/{id}', [ProductoCompuestoController::class, 'updateWeb'])
         ->name('productos.update');
 
     // ===============================
