@@ -129,17 +129,17 @@ class LlantaController extends Controller
      |===========================*/
 
     private function sincronizarCompuestos(Llanta $llanta)
-    {
-        $llanta->compuestos()->delete();
-
-        if ($llanta->stock < 2) {
-            return;
-        }
-
-        ProductoCompuesto::create([
-            'llanta_id'        => $llanta->id,
+{
+    // =========================
+    // PAR
+    // =========================
+    ProductoCompuesto::updateOrCreate(
+        [
+            'llanta_id' => $llanta->id,
+            'tipo'      => 'par',
+        ],
+        [
             'sku'              => $llanta->sku . '-2',
-            'tipo'             => 'par',
             'stock'            => 2,
             'descripcion'      => $llanta->descripcion,
             'title_familyname' => $llanta->title_familyname,
@@ -147,14 +147,21 @@ class LlantaController extends Controller
             'precio_ML'        => $llanta->precio_ML !== null
                                     ? $llanta->precio_ML * 2
                                     : null,
-            'MLM'              => $llanta->MLM,
-        ]);
+            // ❗ MLM NO SE TOCA
+        ]
+    );
 
-        if ($llanta->stock >= 4) {
-            ProductoCompuesto::create([
-                'llanta_id'        => $llanta->id,
+    // =========================
+    // JUEGO DE 4
+    // =========================
+    if ($llanta->stock >= 4) {
+        ProductoCompuesto::updateOrCreate(
+            [
+                'llanta_id' => $llanta->id,
+                'tipo'      => 'juego4',
+            ],
+            [
                 'sku'              => $llanta->sku . '-4',
-                'tipo'             => 'juego4',
                 'stock'            => 4,
                 'descripcion'      => $llanta->descripcion,
                 'title_familyname' => $llanta->title_familyname,
@@ -162,8 +169,10 @@ class LlantaController extends Controller
                 'precio_ML'        => $llanta->precio_ML !== null
                                         ? $llanta->precio_ML * 4
                                         : null,
-                'MLM'              => $llanta->MLM,
-            ]);
-        }
+                // ❗ MLM NO SE TOCA
+            ]
+        );
     }
+}
+
 }
