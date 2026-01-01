@@ -127,13 +127,14 @@ class LlantaController extends Controller
      |===========================*/
 
     /**
-     * ✅ SIEMPRE crea PAR y JUEGO4 aunque stock sea 0 o 1
-     * ✅ NO toca MLM (porque cada publicación tiene MLM distinto)
+     * 🔥 CREA SIEMPRE PAR Y JUEGO4
+     * 🔥 NO TOCA MLM
+     * 🔥 FUNCIONA PARA IMPORT / API / WEB
      */
-    public function sincronizarCompuestos(Llanta $llanta)
+    private function sincronizarCompuestos(Llanta $llanta): void
     {
         // =========================
-        // PAR (siempre)
+        // PAR
         // =========================
         ProductoCompuesto::updateOrCreate(
             [
@@ -146,13 +147,14 @@ class LlantaController extends Controller
                 'descripcion'      => $llanta->descripcion,
                 'title_familyname' => $llanta->title_familyname,
                 'costo'            => $llanta->costo * 2,
-                'precio_ML'        => $llanta->precio_ML !== null ? $llanta->precio_ML * 2 : null,
-                // ❗ MLM NO SE TOCA
+                'precio_ML'        => $llanta->precio_ML !== null
+                                        ? $llanta->precio_ML * 2
+                                        : null,
             ]
         );
 
         // =========================
-        // JUEGO DE 4 (siempre)
+        // JUEGO DE 4
         // =========================
         ProductoCompuesto::updateOrCreate(
             [
@@ -165,14 +167,11 @@ class LlantaController extends Controller
                 'descripcion'      => $llanta->descripcion,
                 'title_familyname' => $llanta->title_familyname,
                 'costo'            => $llanta->costo * 4,
-                'precio_ML'        => $llanta->precio_ML !== null ? $llanta->precio_ML * 4 : null,
-                // ❗ MLM NO SE TOCA
+                'precio_ML'        => $llanta->precio_ML !== null
+                                        ? $llanta->precio_ML * 4
+                                        : null,
             ]
         );
-
-        // ✅ Si viene de una ruta POST web (botón), regresamos back()
-        // Si lo llamas desde API/store/update no afecta.
-        return back()->with('success', 'Compuestos regenerados correctamente');
     }
 
     public function agotadasWeb(Request $request)
@@ -187,19 +186,4 @@ class LlantaController extends Controller
 
         return view('llantas.agotadas', compact('llantas'));
     }
-
-    /**
-     * ✅ Regenerar compuestos de TODO el inventario
-     */
-    public function regenerarCompuestos()
-    {
-        Llanta::chunk(100, function ($llantas) {
-            foreach ($llantas as $llanta) {
-                $this->sincronizarCompuestos($llanta);
-            }
-        });
-
-        return back()->with('success', 'Compuestos regenerados correctamente');
-    }
-
 }

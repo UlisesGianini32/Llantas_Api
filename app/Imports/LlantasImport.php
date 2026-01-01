@@ -11,18 +11,31 @@ class LlantasImport implements ToCollection
 {
     public function collection(Collection $rows)
     {
-        // Buscar encabezado real
+        // =============================
+        // 1) Buscar encabezado real
+        // =============================
         while ($rows->count() > 0) {
             $v = mb_strtolower(trim((string)($rows->first()[0] ?? '')));
             if ($v === 'codigo' || $v === 'código') break;
             $rows->shift();
         }
 
+        // Si ya no hay filas, salir
+        if ($rows->count() === 0) return;
+
         // Quitar encabezado
         $rows->shift();
 
+        // =============================
+        // 2) Recorrer filas
+        // =============================
         foreach ($rows as $row) {
 
+            // Excel:
+            // 0 = Codigo
+            // 1 = Descripcion (de aquí sacamos marca/medida + guardamos descripcion)
+            // 2 = Existencia (stock)
+            // 3 = Precio lista (costo)
             $sku   = trim((string)($row[0] ?? ''));
             $desc  = trim((string)($row[1] ?? ''));
             $stock = intval($row[2] ?? 0);
@@ -32,72 +45,85 @@ class LlantasImport implements ToCollection
 
             [$marca, $medida] = $this->parseDescripcion($desc);
 
+            // =============================
+            // 3) Crear o actualizar llanta
+            // =============================
             $llanta = Llanta::where('sku', $sku)->first();
 
-            // =============================
-            // SKU EXISTENTE
-            // =============================
             if ($llanta) {
 
-                // detectar precio manual
-                $precioAutoViejo = $llanta->costo * 1.5;
+                // Detectar si el precio fue editado manualmente
+                // (si se separa del auto calculado anterior, lo respetamos)
+                $precioAutoViejo = (float) $llanta->costo * 1.5;
                 $precioActual    = $llanta->precio_ML;
 
                 $precioManual = !is_null($precioActual)
-                    && abs($precioActual - $precioAutoViejo) > 0.01;
+                    && abs((float)$precioActual - (float)$precioAutoViejo) > 0.01;
 
+                // Actualizar datos del excel
                 $llanta->update([
                     'stock' => $stock,
                     'costo' => $costo,
                 ]);
 
+                // Si NO era manual, recalcular precio llanta sola
                 if (!$precioManual) {
                     $llanta->update([
-                        'precio_ML' => $costo * 1.5
+                        'precio_ML' => $costo * 1.5,
                     ]);
                 }
 
-                $this->syncCompuestos($llanta);
-                continue;
+                // Asegurar texto (siempre puedes cambiar esto si NO quieres que se sobrescriba)
+                $llanta->update([
+                    'marca'            => $marca ?: ($llanta->marca ?? 'GENERICA'),
+                    'medida'           => $medida ?: ($llanta->medida ?? 'N/A'),
+                    'descripcion'      => $desc ?: ($llanta->descripcion ?? 'SIN DESCRIPCIÓN'),
+                    'title_familyname' => trim(($marca ?: 'GENERICA') . ' ' . ($medida ?: 'N/A')),
+                ]);
+
+            } else {
+
+                $llanta = Llanta::create([
+                    'sku'              => $sku,
+                    'marca'            => $marca ?: 'GENERICA',
+                    'medida'           => $medida ?: 'N/A',
+                    'descripcion'      => $desc ?: 'SIN DESCRIPCIÓN',
+                    'costo'            => $costo,
+                    'stock'            => $stock,
+
+                    // Fórmula llanta sola
+                    'precio_ML'        => $costo * 1.5,
+
+                    'title_familyname' => trim(($marca ?: 'GENERICA') . ' ' . ($medida ?: 'N/A')),
+                    'MLM'              => null,
+                ]);
             }
 
             // =============================
-            // SKU NUEVO
+            // 4) SIEMPRE crear/actualizar compuestos
             // =============================
-            $llanta = Llanta::create([
-                'sku'              => $sku,
-                'marca'            => $marca,
-                'medida'           => $medida,
-                'descripcion'      => $desc,
-                'costo'            => $costo,
-                'stock'            => $stock,
-                'precio_ML'        => $costo * 1.5,
-                'title_familyname' => "$marca $medida",
-                'MLM'              => null,
-            ]);
-
-            $this->syncCompuestos($llanta);
+            $this->syncCompuestosSiempre($llanta);
         }
     }
 
-    private function syncCompuestos(Llanta $llanta): void
+    /**
+     * ✅ SIEMPRE crea PAR y JUEGO4 aunque stock sea 0 o 1
+     * ✅ Respeta precio manual de compuestos (si ya lo editaste)
+     * ✅ NO TOCA MLM
+     */
+    private function syncCompuestosSiempre(Llanta $llanta): void
     {
-        /*
-        SIEMPRE crear compuestos,
-        sin importar stock real.
-        NO tocar MLM.
-        */
-
         // =============================
         // PAR (2)
         // =============================
-        $comp = ProductoCompuesto::where('llanta_id', $llanta->id)
+        $compPar = ProductoCompuesto::where('llanta_id', $llanta->id)
             ->where('tipo', 'par')
             ->first();
 
-        $precioAuto = ($llanta->costo * 2) * 1.4;
-        $precioManual = $comp && !is_null($comp->precio_ML)
-            && abs($comp->precio_ML - $precioAuto) > 0.01;
+        $precioAutoPar = ((float)$llanta->costo * 2) * 1.4;
+
+        $precioParManual = $compPar && !is_null($compPar->precio_ML)
+            && abs((float)$compPar->precio_ML - (float)$precioAutoPar) > 0.01;
 
         ProductoCompuesto::updateOrCreate(
             ['llanta_id' => $llanta->id, 'tipo' => 'par'],
@@ -106,23 +132,28 @@ class LlantasImport implements ToCollection
                 'stock'            => 2,
                 'descripcion'      => $llanta->descripcion,
                 'title_familyname' => $llanta->title_familyname,
-                'costo'            => $llanta->costo * 2,
-                'precio_ML'        => $precioManual
-                    ? $comp->precio_ML
-                    : $precioAuto,
+                'costo'            => (float)$llanta->costo * 2,
+
+                // si fue manual, respetar; si no, calcular
+                'precio_ML'        => $precioParManual
+                    ? (float)$compPar->precio_ML
+                    : (float)$precioAutoPar,
+
+                // ❗ MLM NO SE TOCA
             ]
         );
 
         // =============================
-        // JUEGO DE 4
+        // JUEGO4 (4)
         // =============================
-        $comp = ProductoCompuesto::where('llanta_id', $llanta->id)
+        $comp4 = ProductoCompuesto::where('llanta_id', $llanta->id)
             ->where('tipo', 'juego4')
             ->first();
 
-        $precioAuto = ($llanta->costo * 4) * 1.35;
-        $precioManual = $comp && !is_null($comp->precio_ML)
-            && abs($comp->precio_ML - $precioAuto) > 0.01;
+        $precioAuto4 = ((float)$llanta->costo * 4) * 1.35;
+
+        $precio4Manual = $comp4 && !is_null($comp4->precio_ML)
+            && abs((float)$comp4->precio_ML - (float)$precioAuto4) > 0.01;
 
         ProductoCompuesto::updateOrCreate(
             ['llanta_id' => $llanta->id, 'tipo' => 'juego4'],
@@ -131,26 +162,31 @@ class LlantasImport implements ToCollection
                 'stock'            => 4,
                 'descripcion'      => $llanta->descripcion,
                 'title_familyname' => $llanta->title_familyname,
-                'costo'            => $llanta->costo * 4,
-                'precio_ML'        => $precioManual
-                    ? $comp->precio_ML
-                    : $precioAuto,
+                'costo'            => (float)$llanta->costo * 4,
+
+                'precio_ML'        => $precio4Manual
+                    ? (float)$comp4->precio_ML
+                    : (float)$precioAuto4,
+
+                // ❗ MLM NO SE TOCA
             ]
         );
     }
 
-
+    /**
+     * Parser básico: saca medida y marca de la descripción
+     */
     private function parseDescripcion(string $desc): array
     {
-        $desc = strtoupper($desc);
+        $desc = strtoupper(trim($desc));
 
-        preg_match('/\d{3}\/\d{2}R\d{2}|\d{2}-\d{2}\.?\d?/', $desc, $m);
+        // Medida típica: 205/55R16, 235/55R18, etc
+        preg_match('/\d{3}\/\d{2}R\d{2}/', $desc, $m);
         $medida = $m[0] ?? 'N/A';
 
         $marcas = [
-            'NEXEN','COOPER','HAIDA','MAXTREK',
-            'GLADIATOR','MICHELIN','PIRELLI',
-            'GOODYEAR','CONTINENTAL','BRIDGESTONE'
+            'NEXEN','COOPER','HAIDA','MAXTREK','GLADIATOR','MICHELIN','PIRELLI',
+            'GOODYEAR','CONTINENTAL','BRIDGESTONE','ATLAS'
         ];
 
         $marca = 'GENERICA';
