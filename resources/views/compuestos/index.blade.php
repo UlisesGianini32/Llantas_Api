@@ -42,12 +42,12 @@
                                 {{ $compuesto->sku }}
                             </td>
 
-                            {{-- Marca --}}
+                            {{-- Marca (desde llanta) --}}
                             <td class="px-4 py-2">
                                 {{ $compuesto->llanta->marca ?? '—' }}
                             </td>
 
-                            {{-- Medida --}}
+                            {{-- Medida (desde llanta) --}}
                             <td class="px-4 py-2">
                                 {{ $compuesto->llanta->medida ?? '—' }}
                             </td>
@@ -57,17 +57,17 @@
                                 {{ $compuesto->descripcion ?? '—' }}
                             </td>
 
-                            {{-- Costo --}}
+                            {{-- ✅ COSTO REAL --}}
                             <td class="px-4 py-2 text-right">
                                 ${{ number_format($compuesto->costo_real, 2) }}
                             </td>
 
-                            {{-- Precio --}}
+                            {{-- ✅ PRECIO ML REAL --}}
                             <td class="px-4 py-2 text-right text-green-400 font-semibold">
                                 ${{ number_format($compuesto->precio_ml_real, 2) }}
                             </td>
 
-                            {{-- Título --}}
+                            {{-- ✅ TÍTULO REAL --}}
                             <td class="px-4 py-2">
                                 {{ $compuesto->titulo_real }}
                             </td>
@@ -77,37 +77,17 @@
                                 {{ $compuesto->MLM ?? '—' }}
                             </td>
 
-                            {{-- Stock disponible --}}
+                            {{-- STOCK DISPONIBLE --}}
                             <td class="px-4 py-2 text-center font-semibold">
                                 {{ $compuesto->stock_disponible }}
                             </td>
 
-                            {{-- 🔧 ACCIONES --}}
-                            <td class="px-4 py-2 text-center space-y-1">
-
-                                {{-- Editar --}}
+                            {{-- Acción --}}
+                            <td class="px-4 py-2 text-center">
                                 <a href="{{ route('productos.edit', $compuesto->id) }}"
-                                   class="block text-indigo-400 hover:text-indigo-300">
+                                   class="text-indigo-400 hover:text-indigo-300">
                                     ✏️ Editar
                                 </a>
-
-                                {{-- 🔄 Regenerar compuestos --}}
-                                @if($compuesto->llanta)
-                                    <form
-                                        method="POST"
-                                        action="{{ route('llantas.regenerar-compuestos', $compuesto->llanta->id) }}"
-                                    >
-                                        @csrf
-                                        <button
-                                            type="submit"
-                                            class="text-xs text-yellow-400 hover:text-yellow-300"
-                                            onclick="return confirm('¿Regenerar compuestos de esta llanta?')"
-                                        >
-                                            🔄 Regenerar
-                                        </button>
-                                    </form>
-                                @endif
-
                             </td>
 
                         </tr>
