@@ -127,14 +127,13 @@ class LlantaController extends Controller
      |===========================*/
 
     /**
-     * 🔥 CREA SIEMPRE PAR Y JUEGO4
-     * 🔥 NO TOCA MLM
-     * 🔥 FUNCIONA PARA IMPORT / API / WEB
+     * ✅ SIEMPRE crea PAR y JUEGO4 aunque stock sea 0 o 1
+     * ✅ NO toca MLM (porque cada publicación tiene MLM distinto)
      */
-    private function sincronizarCompuestos(Llanta $llanta): void
+    private function sincronizarCompuestos(Llanta $llanta)
     {
         // =========================
-        // PAR
+        // PAR (siempre)
         // =========================
         ProductoCompuesto::updateOrCreate(
             [
@@ -147,14 +146,13 @@ class LlantaController extends Controller
                 'descripcion'      => $llanta->descripcion,
                 'title_familyname' => $llanta->title_familyname,
                 'costo'            => $llanta->costo * 2,
-                'precio_ML'        => $llanta->precio_ML !== null
-                                        ? $llanta->precio_ML * 2
-                                        : null,
+                'precio_ML'        => $llanta->precio_ML !== null ? $llanta->precio_ML * 2 : null,
+                // ❗ MLM NO SE TOCA
             ]
         );
 
         // =========================
-        // JUEGO DE 4
+        // JUEGO DE 4 (siempre)
         // =========================
         ProductoCompuesto::updateOrCreate(
             [
@@ -167,9 +165,8 @@ class LlantaController extends Controller
                 'descripcion'      => $llanta->descripcion,
                 'title_familyname' => $llanta->title_familyname,
                 'costo'            => $llanta->costo * 4,
-                'precio_ML'        => $llanta->precio_ML !== null
-                                        ? $llanta->precio_ML * 4
-                                        : null,
+                'precio_ML'        => $llanta->precio_ML !== null ? $llanta->precio_ML * 4 : null,
+                // ❗ MLM NO SE TOCA
             ]
         );
     }
@@ -186,4 +183,5 @@ class LlantaController extends Controller
 
         return view('llantas.agotadas', compact('llantas'));
     }
+
 }
