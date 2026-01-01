@@ -102,7 +102,7 @@ class LlantaController extends Controller
             'title_familyname' => 'required|string|max:255',
             'precio_ML'        => 'required|numeric|min:0',
             'stock'            => 'required|integer|min:0',
-            'MLM'              => 'nullable|string|max:255', // ✅ NUEVO
+            'MLM'              => 'nullable|string|max:255',
         ]);
 
         $llanta->update([
@@ -112,10 +112,9 @@ class LlantaController extends Controller
             'title_familyname' => $request->title_familyname,
             'precio_ML'        => $request->precio_ML,
             'stock'            => $request->stock,
-            'MLM'              => $request->MLM, // ✅ SE GUARDA MLM
+            'MLM'              => $request->MLM,
         ]);
 
-        // 🔄 Regenera pares y juegos (propaga MLM)
         $this->sincronizarCompuestos($llanta);
 
         return redirect()
@@ -123,15 +122,18 @@ class LlantaController extends Controller
             ->with('success', 'Llanta y productos compuestos actualizados');
     }
 
-
     /* ===========================
      | HELPERS
      |===========================*/
 
-    private function sincronizarCompuestos(Llanta $llanta)
+    /**
+     * ✅ SIEMPRE crea PAR y JUEGO4 aunque stock sea 0 o 1
+     * ✅ NO toca MLM (porque cada publicación tiene MLM distinto)
+     */
+    public function sincronizarCompuestos(Llanta $llanta)
     {
         // =========================
-        // PAR
+        // PAR (siempre)
         // =========================
         ProductoCompuesto::updateOrCreate(
             [
@@ -144,36 +146,33 @@ class LlantaController extends Controller
                 'descripcion'      => $llanta->descripcion,
                 'title_familyname' => $llanta->title_familyname,
                 'costo'            => $llanta->costo * 2,
-                'precio_ML'        => $llanta->precio_ML !== null
-                                        ? $llanta->precio_ML * 2
-                                        : null,
+                'precio_ML'        => $llanta->precio_ML !== null ? $llanta->precio_ML * 2 : null,
                 // ❗ MLM NO SE TOCA
             ]
         );
 
         // =========================
-        // JUEGO DE 4
+        // JUEGO DE 4 (siempre)
         // =========================
-        if ($llanta->stock >= 4) {
-            ProductoCompuesto::updateOrCreate(
-                [
-                    'llanta_id' => $llanta->id,
-                    'tipo'      => 'juego4',
-                ],
-                [
-                    'sku'              => $llanta->sku . '-4',
-                    'stock'            => 4,
-                    'descripcion'      => $llanta->descripcion,
-                    'title_familyname' => $llanta->title_familyname,
-                    'costo'            => $llanta->costo * 4,
-                    'precio_ML'        => $llanta->precio_ML !== null
-                                            ? $llanta->precio_ML * 4
-                                            : null,
-                    // ❗ MLM NO SE TOCA
-                ]
-            );
-        }
-        
+        ProductoCompuesto::updateOrCreate(
+            [
+                'llanta_id' => $llanta->id,
+                'tipo'      => 'juego4',
+            ],
+            [
+                'sku'              => $llanta->sku . '-4',
+                'stock'            => 4,
+                'descripcion'      => $llanta->descripcion,
+                'title_familyname' => $llanta->title_familyname,
+                'costo'            => $llanta->costo * 4,
+                'precio_ML'        => $llanta->precio_ML !== null ? $llanta->precio_ML * 4 : null,
+                // ❗ MLM NO SE TOCA
+            ]
+        );
+
+        // ✅ Si viene de una ruta POST web (botón), regresamos back()
+        // Si lo llamas desde API/store/update no afecta.
+        return back()->with('success', 'Compuestos regenerados correctamente');
     }
 
     public function agotadasWeb(Request $request)
@@ -187,5 +186,20 @@ class LlantaController extends Controller
             ->withQueryString();
 
         return view('llantas.agotadas', compact('llantas'));
+    }
+
+    /**
+     * ✅ Regenerar compuestos de TODO el inventario
+     */
+    public function regenerarCompuestos()
+    {
+        Llanta::chunk(100, function ($llantas) {
+            foreach ($llantas as $llanta) {
+                // ✅ AQUÍ ESTABA EL ERROR: NO LLAMAR IMPORT
+                $this->sincronizarCompuestos($llanta);
+            }
+        });
+
+        return back()->with('success', 'Compuestos regenerados correctamente');
     }
 }

@@ -43,6 +43,9 @@ Route::middleware('auth')->group(function () {
     Route::put('/productos/{id}', [ProductoCompuestoController::class, 'updateWeb'])
         ->name('productos.update');
 
+    Route::post('/llantas/regenerar-compuestos', [LlantaController::class, 'regenerarCompuestos'])
+        ->name('llantas.regenerar');
+
     // ===============================
     // EXCEL
     // ===============================
