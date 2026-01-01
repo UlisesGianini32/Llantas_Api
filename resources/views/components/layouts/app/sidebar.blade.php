@@ -37,9 +37,18 @@
                 {{-- LLANTAS --}}
                 <flux:navlist.item
                     :href="route('llantas.index')"
-                    :current="request()->routeIs('llantas.*')"
+                    :current="request()->routeIs('llantas.index')"
                     wire:navigate>
                     Llantas
+                </flux:navlist.item>
+
+                {{-- 🔴 LLANTAS AGOTADAS --}}
+                <flux:navlist.item
+                    :href="route('llantas.agotadas')"
+                    :current="request()->routeIs('llantas.agotadas')"
+                    wire:navigate
+                    class="text-red-400">
+                    🔴 Llantas agotadas
                 </flux:navlist.item>
 
                 {{-- PRODUCTOS COMPUESTOS --}}
@@ -49,7 +58,7 @@
                     Productos compuestos
                 </flux:navlist.item>
 
-                {{-- IMPORTAR EXCEL (NUEVO) --}}
+                {{-- IMPORTAR EXCEL --}}
                 <flux:navlist.item
                     :href="route('excel.vista')"
                     :current="request()->routeIs('excel.*')">

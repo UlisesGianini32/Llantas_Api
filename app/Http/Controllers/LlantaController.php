@@ -129,50 +129,63 @@ class LlantaController extends Controller
      |===========================*/
 
     private function sincronizarCompuestos(Llanta $llanta)
-{
-    // =========================
-    // PAR
-    // =========================
-    ProductoCompuesto::updateOrCreate(
-        [
-            'llanta_id' => $llanta->id,
-            'tipo'      => 'par',
-        ],
-        [
-            'sku'              => $llanta->sku . '-2',
-            'stock'            => 2,
-            'descripcion'      => $llanta->descripcion,
-            'title_familyname' => $llanta->title_familyname,
-            'costo'            => $llanta->costo * 2,
-            'precio_ML'        => $llanta->precio_ML !== null
-                                    ? $llanta->precio_ML * 2
-                                    : null,
-            // ❗ MLM NO SE TOCA
-        ]
-    );
-
-    // =========================
-    // JUEGO DE 4
-    // =========================
-    if ($llanta->stock >= 4) {
+    {
+        // =========================
+        // PAR
+        // =========================
         ProductoCompuesto::updateOrCreate(
             [
                 'llanta_id' => $llanta->id,
-                'tipo'      => 'juego4',
+                'tipo'      => 'par',
             ],
             [
-                'sku'              => $llanta->sku . '-4',
-                'stock'            => 4,
+                'sku'              => $llanta->sku . '-2',
+                'stock'            => 2,
                 'descripcion'      => $llanta->descripcion,
                 'title_familyname' => $llanta->title_familyname,
-                'costo'            => $llanta->costo * 4,
+                'costo'            => $llanta->costo * 2,
                 'precio_ML'        => $llanta->precio_ML !== null
-                                        ? $llanta->precio_ML * 4
+                                        ? $llanta->precio_ML * 2
                                         : null,
                 // ❗ MLM NO SE TOCA
             ]
         );
-    }
-}
 
+        // =========================
+        // JUEGO DE 4
+        // =========================
+        if ($llanta->stock >= 4) {
+            ProductoCompuesto::updateOrCreate(
+                [
+                    'llanta_id' => $llanta->id,
+                    'tipo'      => 'juego4',
+                ],
+                [
+                    'sku'              => $llanta->sku . '-4',
+                    'stock'            => 4,
+                    'descripcion'      => $llanta->descripcion,
+                    'title_familyname' => $llanta->title_familyname,
+                    'costo'            => $llanta->costo * 4,
+                    'precio_ML'        => $llanta->precio_ML !== null
+                                            ? $llanta->precio_ML * 4
+                                            : null,
+                    // ❗ MLM NO SE TOCA
+                ]
+            );
+        }
+        
+    }
+
+    public function agotadasWeb(Request $request)
+    {
+        $llantas = Llanta::where('stock', '<=', 0)
+            ->when($request->search, function ($q) use ($request) {
+                $q->where('sku', 'like', "%{$request->search}%");
+            })
+            ->orderBy('id', 'desc')
+            ->paginate(15)
+            ->withQueryString();
+
+        return view('llantas.agotadas', compact('llantas'));
+    }
 }

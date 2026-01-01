@@ -28,6 +28,9 @@ Route::middleware('auth')->group(function () {
     Route::put('/llantas/{id}', [LlantaController::class, 'updateWeb'])
         ->name('llantas.update');
 
+    Route::get('/llantas/agotadas', [LlantaController::class, 'agotadasWeb'])
+        ->name('llantas.agotadas');
+
     // ===============================
     // PRODUCTOS COMPUESTOS (WEB)
     // ===============================
