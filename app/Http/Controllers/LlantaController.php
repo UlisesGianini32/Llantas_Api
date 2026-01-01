@@ -195,11 +195,11 @@ class LlantaController extends Controller
     {
         Llanta::chunk(100, function ($llantas) {
             foreach ($llantas as $llanta) {
-                // ✅ AQUÍ ESTABA EL ERROR: NO LLAMAR IMPORT
                 $this->sincronizarCompuestos($llanta);
             }
         });
 
         return back()->with('success', 'Compuestos regenerados correctamente');
     }
+
 }
