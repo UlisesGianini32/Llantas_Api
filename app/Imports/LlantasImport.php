@@ -82,62 +82,63 @@ class LlantasImport implements ToCollection
 
     private function syncCompuestos(Llanta $llanta): void
     {
-        // =============================
-        // PAR
-        // =============================
-        if ($llanta->stock >= 2) {
-
-            $comp = ProductoCompuesto::where('llanta_id', $llanta->id)
-                ->where('tipo', 'par')
-                ->first();
-
-            $precioAuto = ($llanta->costo * 2) * 1.4;
-            $precioManual = $comp && !is_null($comp->precio_ML)
-                && abs($comp->precio_ML - $precioAuto) > 0.01;
-
-            ProductoCompuesto::updateOrCreate(
-                ['llanta_id' => $llanta->id, 'tipo' => 'par'],
-                [
-                    'sku'              => $llanta->sku . '-2',
-                    'stock'            => 2,
-                    'descripcion'      => $llanta->descripcion,
-                    'title_familyname' => $llanta->title_familyname,
-                    'costo'            => $llanta->costo * 2,
-                    'precio_ML'        => $precioManual
-                        ? $comp->precio_ML
-                        : $precioAuto,
-                ]
-            );
-        }
+        /*
+        SIEMPRE crear compuestos,
+        sin importar stock real.
+        NO tocar MLM.
+        */
 
         // =============================
-        // JUEGO 4
+        // PAR (2)
         // =============================
-        if ($llanta->stock >= 4) {
+        $comp = ProductoCompuesto::where('llanta_id', $llanta->id)
+            ->where('tipo', 'par')
+            ->first();
 
-            $comp = ProductoCompuesto::where('llanta_id', $llanta->id)
-                ->where('tipo', 'juego4')
-                ->first();
+        $precioAuto = ($llanta->costo * 2) * 1.4;
+        $precioManual = $comp && !is_null($comp->precio_ML)
+            && abs($comp->precio_ML - $precioAuto) > 0.01;
 
-            $precioAuto = ($llanta->costo * 4) * 1.35;
-            $precioManual = $comp && !is_null($comp->precio_ML)
-                && abs($comp->precio_ML - $precioAuto) > 0.01;
+        ProductoCompuesto::updateOrCreate(
+            ['llanta_id' => $llanta->id, 'tipo' => 'par'],
+            [
+                'sku'              => $llanta->sku . '-2',
+                'stock'            => 2,
+                'descripcion'      => $llanta->descripcion,
+                'title_familyname' => $llanta->title_familyname,
+                'costo'            => $llanta->costo * 2,
+                'precio_ML'        => $precioManual
+                    ? $comp->precio_ML
+                    : $precioAuto,
+            ]
+        );
 
-            ProductoCompuesto::updateOrCreate(
-                ['llanta_id' => $llanta->id, 'tipo' => 'juego4'],
-                [
-                    'sku'              => $llanta->sku . '-4',
-                    'stock'            => 4,
-                    'descripcion'      => $llanta->descripcion,
-                    'title_familyname' => $llanta->title_familyname,
-                    'costo'            => $llanta->costo * 4,
-                    'precio_ML'        => $precioManual
-                        ? $comp->precio_ML
-                        : $precioAuto,
-                ]
-            );
-        }
+        // =============================
+        // JUEGO DE 4
+        // =============================
+        $comp = ProductoCompuesto::where('llanta_id', $llanta->id)
+            ->where('tipo', 'juego4')
+            ->first();
+
+        $precioAuto = ($llanta->costo * 4) * 1.35;
+        $precioManual = $comp && !is_null($comp->precio_ML)
+            && abs($comp->precio_ML - $precioAuto) > 0.01;
+
+        ProductoCompuesto::updateOrCreate(
+            ['llanta_id' => $llanta->id, 'tipo' => 'juego4'],
+            [
+                'sku'              => $llanta->sku . '-4',
+                'stock'            => 4,
+                'descripcion'      => $llanta->descripcion,
+                'title_familyname' => $llanta->title_familyname,
+                'costo'            => $llanta->costo * 4,
+                'precio_ML'        => $precioManual
+                    ? $comp->precio_ML
+                    : $precioAuto,
+            ]
+        );
     }
+
 
     private function parseDescripcion(string $desc): array
     {
