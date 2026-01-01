@@ -11,15 +11,10 @@ class LlantasImport implements ToCollection
 {
     public function collection(Collection $rows)
     {
-        /**
-         * Saltar filas hasta encontrar encabezado real
-         */
+        // Buscar encabezado real
         while ($rows->count() > 0) {
-            $first = $rows->first();
-            $v0 = isset($first[0]) ? trim(mb_strtolower((string)$first[0])) : '';
-            if ($v0 === 'codigo' || $v0 === 'código') {
-                break;
-            }
+            $v = mb_strtolower(trim((string)($rows->first()[0] ?? '')));
+            if ($v === 'codigo' || $v === 'código') break;
             $rows->shift();
         }
 
@@ -35,23 +30,40 @@ class LlantasImport implements ToCollection
 
             if ($sku === '') continue;
 
-            // =========================
-            // EXTRAER MARCA Y MEDIDA
-            // =========================
-            [$marca, $medida] = $this->extraerMarcaMedida($desc);
+            [$marca, $medida] = $this->parseDescripcion($desc);
 
-            // =========================
-            // 🔥 BORRAR TODO DEL SKU
-            // =========================
-            $llantaVieja = Llanta::where('sku', $sku)->first();
-            if ($llantaVieja) {
-                ProductoCompuesto::where('llanta_id', $llantaVieja->id)->delete();
-                $llantaVieja->delete();
+            $llanta = Llanta::where('sku', $sku)->first();
+
+            // =============================
+            // SKU EXISTENTE
+            // =============================
+            if ($llanta) {
+
+                // detectar precio manual
+                $precioAutoViejo = $llanta->costo * 1.5;
+                $precioActual    = $llanta->precio_ML;
+
+                $precioManual = !is_null($precioActual)
+                    && abs($precioActual - $precioAutoViejo) > 0.01;
+
+                $llanta->update([
+                    'stock' => $stock,
+                    'costo' => $costo,
+                ]);
+
+                if (!$precioManual) {
+                    $llanta->update([
+                        'precio_ML' => $costo * 1.5
+                    ]);
+                }
+
+                $this->syncCompuestos($llanta);
+                continue;
             }
 
-            // =========================
-            // CREAR LLANTA LIMPIA
-            // =========================
+            // =============================
+            // SKU NUEVO
+            // =============================
             $llanta = Llanta::create([
                 'sku'              => $sku,
                 'marca'            => $marca,
@@ -60,50 +72,74 @@ class LlantasImport implements ToCollection
                 'costo'            => $costo,
                 'stock'            => $stock,
                 'precio_ML'        => $costo * 1.5,
-                'title_familyname' => trim("$marca $medida"),
+                'title_familyname' => "$marca $medida",
                 'MLM'              => null,
             ]);
 
-            // =========================
-            // PAR
-            // =========================
-            if ($stock >= 2) {
-                ProductoCompuesto::create([
-                    'llanta_id'        => $llanta->id,
-                    'sku'              => $sku . '-2',
-                    'tipo'             => 'par',
-                    'stock'            => 2,
-                    'descripcion'      => $desc,
-                    'title_familyname' => trim("$marca $medida"),
-                    'costo'            => $costo * 2,
-                    'precio_ML'        => ($costo * 2) * 1.4,
-                    'MLM'              => null,
-                ]);
-            }
-
-            // =========================
-            // JUEGO DE 4
-            // =========================
-            if ($stock >= 4) {
-                ProductoCompuesto::create([
-                    'llanta_id'        => $llanta->id,
-                    'sku'              => $sku . '-4',
-                    'tipo'             => 'juego4',
-                    'stock'            => 4,
-                    'descripcion'      => $desc,
-                    'title_familyname' => trim("$marca $medida"),
-                    'costo'            => $costo * 4,
-                    'precio_ML'        => ($costo * 4) * 1.35,
-                    'MLM'              => null,
-                ]);
-            }
+            $this->syncCompuestos($llanta);
         }
     }
 
-    // =========================
-    // PARSEO SIMPLE
-    // =========================
-    private function extraerMarcaMedida(string $desc): array
+    private function syncCompuestos(Llanta $llanta): void
+    {
+        // =============================
+        // PAR
+        // =============================
+        if ($llanta->stock >= 2) {
+
+            $comp = ProductoCompuesto::where('llanta_id', $llanta->id)
+                ->where('tipo', 'par')
+                ->first();
+
+            $precioAuto = ($llanta->costo * 2) * 1.4;
+            $precioManual = $comp && !is_null($comp->precio_ML)
+                && abs($comp->precio_ML - $precioAuto) > 0.01;
+
+            ProductoCompuesto::updateOrCreate(
+                ['llanta_id' => $llanta->id, 'tipo' => 'par'],
+                [
+                    'sku'              => $llanta->sku . '-2',
+                    'stock'            => 2,
+                    'descripcion'      => $llanta->descripcion,
+                    'title_familyname' => $llanta->title_familyname,
+                    'costo'            => $llanta->costo * 2,
+                    'precio_ML'        => $precioManual
+                        ? $comp->precio_ML
+                        : $precioAuto,
+                ]
+            );
+        }
+
+        // =============================
+        // JUEGO 4
+        // =============================
+        if ($llanta->stock >= 4) {
+
+            $comp = ProductoCompuesto::where('llanta_id', $llanta->id)
+                ->where('tipo', 'juego4')
+                ->first();
+
+            $precioAuto = ($llanta->costo * 4) * 1.35;
+            $precioManual = $comp && !is_null($comp->precio_ML)
+                && abs($comp->precio_ML - $precioAuto) > 0.01;
+
+            ProductoCompuesto::updateOrCreate(
+                ['llanta_id' => $llanta->id, 'tipo' => 'juego4'],
+                [
+                    'sku'              => $llanta->sku . '-4',
+                    'stock'            => 4,
+                    'descripcion'      => $llanta->descripcion,
+                    'title_familyname' => $llanta->title_familyname,
+                    'costo'            => $llanta->costo * 4,
+                    'precio_ML'        => $precioManual
+                        ? $comp->precio_ML
+                        : $precioAuto,
+                ]
+            );
+        }
+    }
+
+    private function parseDescripcion(string $desc): array
     {
         $desc = strtoupper($desc);
 
