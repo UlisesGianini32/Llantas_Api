@@ -11,6 +11,12 @@ class LlantasImport implements ToCollection
 {
     public function collection(Collection $rows)
     {
+        /* ===============================
+         | NUEVO: guardar SKUs existentes
+         ===============================*/
+        $skusExistentes = Llanta::pluck('sku')->toArray();
+        $skusEnExcel = [];
+
         // Buscar encabezado real
         while ($rows->count() > 0) {
             $v = mb_strtolower(trim((string)($rows->first()[0] ?? '')));
@@ -29,6 +35,11 @@ class LlantasImport implements ToCollection
             $costo = floatval($row[3] ?? 0);
 
             if ($sku === '') continue;
+
+            /* ===============================
+             | NUEVO: marcar SKU procesado
+             ===============================*/
+            $skusEnExcel[] = $sku;
 
             [$marca, $medida] = $this->parseDescripcion($desc);
 
@@ -78,19 +89,27 @@ class LlantasImport implements ToCollection
 
             $this->syncCompuestos($llanta);
         }
+
+        /* ===============================
+         | NUEVO: SKUs que NO vinieron
+         | → stock = 0
+         ===============================*/
+        $skusNoEnExcel = array_diff($skusExistentes, $skusEnExcel);
+
+        if (!empty($skusNoEnExcel)) {
+            Llanta::whereIn('sku', $skusNoEnExcel)->update([
+                'stock' => 0
+            ]);
+        }
     }
+
+    /* ======================================================
+     | TODO LO DE ABAJO SE QUEDA EXACTAMENTE IGUAL
+     ======================================================*/
 
     private function syncCompuestos(Llanta $llanta): void
     {
-        /*
-        SIEMPRE crear compuestos,
-        sin importar stock real.
-        NO tocar MLM.
-        */
-
-        // =============================
-        // PAR (2)
-        // =============================
+        // PAR
         $comp = ProductoCompuesto::where('llanta_id', $llanta->id)
             ->where('tipo', 'par')
             ->first();
@@ -113,9 +132,7 @@ class LlantasImport implements ToCollection
             ]
         );
 
-        // =============================
         // JUEGO DE 4
-        // =============================
         $comp = ProductoCompuesto::where('llanta_id', $llanta->id)
             ->where('tipo', 'juego4')
             ->first();
@@ -138,7 +155,6 @@ class LlantasImport implements ToCollection
             ]
         );
     }
-
 
     private function parseDescripcion(string $desc): array
     {
