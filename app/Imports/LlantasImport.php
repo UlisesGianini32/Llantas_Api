@@ -11,34 +11,39 @@ class LlantasImport implements ToCollection
 {
     public function collection(Collection $rows)
     {
-        /* ===============================
-         | NUEVO: guardar SKUs existentes
-         ===============================*/
-        $skusExistentes = Llanta::pluck('sku')->toArray();
-        $skusEnExcel = [];
-
-        // Buscar encabezado real
+        // =========================
+        // BUSCAR ENCABEZADO REAL
+        // =========================
         while ($rows->count() > 0) {
             $v = mb_strtolower(trim((string)($rows->first()[0] ?? '')));
-            if ($v === 'codigo' || $v === 'código') break;
+            if ($v === 'codigo' || $v === 'código') {
+                break;
+            }
             $rows->shift();
         }
 
         // Quitar encabezado
         $rows->shift();
 
+        // 🔑 GUARDAMOS LOS SKUS QUE VIENEN EN EL EXCEL
+        $skusEnExcel = [];
+
         foreach ($rows as $row) {
 
-            $sku   = trim((string)($row[0] ?? ''));
+            // =========================
+            // LEER COLUMNAS
+            // =========================
+            $sku = trim((string)($row[0] ?? ''));
+
+            // 🔒 NORMALIZAR SKU (evita 10165.0, espacios, etc)
+            $sku = preg_replace('/\.0$/', '', $sku);
+
+            if ($sku === '') continue;
+
             $desc  = trim((string)($row[1] ?? ''));
             $stock = intval($row[2] ?? 0);
             $costo = floatval($row[3] ?? 0);
 
-            if ($sku === '') continue;
-
-            /* ===============================
-             | NUEVO: marcar SKU procesado
-             ===============================*/
             $skusEnExcel[] = $sku;
 
             [$marca, $medida] = $this->parseDescripcion($desc);
@@ -50,7 +55,7 @@ class LlantasImport implements ToCollection
             // =============================
             if ($llanta) {
 
-                // detectar precio manual
+                // Detectar si el precio fue manual
                 $precioAutoViejo = $llanta->costo * 1.5;
                 $precioActual    = $llanta->precio_ML;
 
@@ -64,7 +69,7 @@ class LlantasImport implements ToCollection
 
                 if (!$precioManual) {
                     $llanta->update([
-                        'precio_ML' => $costo * 1.5
+                        'precio_ML' => $costo * 1.5,
                     ]);
                 }
 
@@ -90,26 +95,28 @@ class LlantasImport implements ToCollection
             $this->syncCompuestos($llanta);
         }
 
-        /* ===============================
-         | NUEVO: SKUs que NO vinieron
-         | → stock = 0
-         ===============================*/
-        $skusNoEnExcel = array_diff($skusExistentes, $skusEnExcel);
-
-        if (!empty($skusNoEnExcel)) {
-            Llanta::whereIn('sku', $skusNoEnExcel)->update([
+        // =========================
+        // 🧹 LOS QUE NO VIENEN EN EXCEL → STOCK = 0
+        // =========================
+        if (!empty($skusEnExcel)) {
+            Llanta::whereNotIn('sku', $skusEnExcel)->update([
                 'stock' => 0
             ]);
         }
     }
 
-    /* ======================================================
-     | TODO LO DE ABAJO SE QUEDA EXACTAMENTE IGUAL
-     ======================================================*/
-
+    /**
+     * =============================
+     * SIEMPRE CREA PAR Y JUEGO4
+     * NO TOCA MLM
+     * RESPETA PRECIOS MANUALES
+     * =============================
+     */
     private function syncCompuestos(Llanta $llanta): void
     {
-        // PAR
+        // =============================
+        // PAR (2)
+        // =============================
         $comp = ProductoCompuesto::where('llanta_id', $llanta->id)
             ->where('tipo', 'par')
             ->first();
@@ -132,7 +139,9 @@ class LlantasImport implements ToCollection
             ]
         );
 
+        // =============================
         // JUEGO DE 4
+        // =============================
         $comp = ProductoCompuesto::where('llanta_id', $llanta->id)
             ->where('tipo', 'juego4')
             ->first();
