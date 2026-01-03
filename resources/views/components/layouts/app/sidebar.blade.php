@@ -43,7 +43,9 @@
                 </flux:navlist.item>
 
                 <flux:navlist.item
-                    :href="route('llantas.no_actualizadas')">
+                    :href="route('llantas.no_actualizadas')"
+                    :current="request()->routeIs('llantas.index')"
+                    wire:navigate>
                     Llantas no actualizadas
                 </flux:navlist.item>
 
