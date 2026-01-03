@@ -44,7 +44,7 @@
 
                 <flux:navlist.item
                     :href="route('llantas.no_actualizadas')">
-                    ⚠️ Llantas no actualizadas
+                    Llantas no actualizadas
                 </flux:navlist.item>
 
 

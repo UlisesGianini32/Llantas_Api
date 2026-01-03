@@ -11,13 +11,9 @@ class LlantasImport implements ToCollection
 {
     public function collection(Collection $rows)
     {
-        $skusEnExcel = [];
-
-        // =========================
         // Buscar encabezado real
-        // =========================
         while ($rows->count() > 0) {
-            $v = mb_strtolower(trim((string) ($rows->first()[0] ?? '')));
+            $v = mb_strtolower(trim((string)($rows->first()[0] ?? '')));
             if ($v === 'codigo' || $v === 'código') break;
             $rows->shift();
         }
@@ -27,60 +23,74 @@ class LlantasImport implements ToCollection
 
         foreach ($rows as $row) {
 
-            // =========================
-            // LIMPIEZA FUERTE DE SKU
-            // =========================
-            $sku = (string) ($row[0] ?? '');
-            $sku = trim($sku);
-            $sku = preg_replace('/\s+/', '', $sku);
-
-            if ($sku === '') continue;
-
-            $desc  = trim((string) ($row[1] ?? ''));
+            $sku   = trim((string)($row[0] ?? ''));
+            $desc  = trim((string)($row[1] ?? ''));
             $stock = intval($row[2] ?? 0);
             $costo = floatval($row[3] ?? 0);
 
-            $skusEnExcel[] = $sku;
+            if ($sku === '') continue;
 
             [$marca, $medida] = $this->parseDescripcion($desc);
 
-            // =========================
-            // LLANTA (UPDATE OR CREATE)
-            // =========================
-            $llanta = Llanta::updateOrCreate(
-                ['sku' => $sku],
-                [
-                    'marca'            => $marca,
-                    'medida'           => $medida,
-                    'descripcion'      => $desc,
-                    'costo'            => $costo,
-                    'stock'            => $stock,
-                    'precio_ML'        => $costo * 1.5,
-                    'title_familyname' => "$marca $medida",
-                ]
-            );
+            $llanta = Llanta::where('sku', $sku)->first();
+
+            // =============================
+            // SKU EXISTENTE
+            // =============================
+            if ($llanta) {
+
+                // detectar precio manual
+                $precioAutoViejo = $llanta->costo * 1.5;
+                $precioActual    = $llanta->precio_ML;
+
+                $precioManual = !is_null($precioActual)
+                    && abs($precioActual - $precioAutoViejo) > 0.01;
+
+                $llanta->update([
+                    'stock' => $stock,
+                    'costo' => $costo,
+                ]);
+
+                if (!$precioManual) {
+                    $llanta->update([
+                        'precio_ML' => $costo * 1.5
+                    ]);
+                }
+
+                $this->syncCompuestos($llanta);
+                continue;
+            }
+
+            // =============================
+            // SKU NUEVO
+            // =============================
+            $llanta = Llanta::create([
+                'sku'              => $sku,
+                'marca'            => $marca,
+                'medida'           => $medida,
+                'descripcion'      => $desc,
+                'costo'            => $costo,
+                'stock'            => $stock,
+                'precio_ML'        => $costo * 1.5,
+                'title_familyname' => "$marca $medida",
+                'MLM'              => null,
+            ]);
 
             $this->syncCompuestos($llanta);
         }
-
-        // =========================
-        // SKUs que NO vinieron → stock 0
-        // =========================
-        Llanta::whereNotIn('sku', array_unique($skusEnExcel))
-            ->where('stock', '>', 0)
-            ->update(['stock' => 0]);
     }
 
-    /**
-     * SIEMPRE crea PAR y JUEGO4
-     * Respeta precio manual
-     * NO toca MLM
-     */
     private function syncCompuestos(Llanta $llanta): void
     {
-        // =========================
-        // PAR
-        // =========================
+        /*
+        SIEMPRE crear compuestos,
+        sin importar stock real.
+        NO tocar MLM.
+        */
+
+        // =============================
+        // PAR (2)
+        // =============================
         $comp = ProductoCompuesto::where('llanta_id', $llanta->id)
             ->where('tipo', 'par')
             ->first();
@@ -97,13 +107,15 @@ class LlantasImport implements ToCollection
                 'descripcion'      => $llanta->descripcion,
                 'title_familyname' => $llanta->title_familyname,
                 'costo'            => $llanta->costo * 2,
-                'precio_ML'        => $precioManual ? $comp->precio_ML : $precioAuto,
+                'precio_ML'        => $precioManual
+                    ? $comp->precio_ML
+                    : $precioAuto,
             ]
         );
 
-        // =========================
-        // JUEGO4
-        // =========================
+        // =============================
+        // JUEGO DE 4
+        // =============================
         $comp = ProductoCompuesto::where('llanta_id', $llanta->id)
             ->where('tipo', 'juego4')
             ->first();
@@ -120,10 +132,13 @@ class LlantasImport implements ToCollection
                 'descripcion'      => $llanta->descripcion,
                 'title_familyname' => $llanta->title_familyname,
                 'costo'            => $llanta->costo * 4,
-                'precio_ML'        => $precioManual ? $comp->precio_ML : $precioAuto,
+                'precio_ML'        => $precioManual
+                    ? $comp->precio_ML
+                    : $precioAuto,
             ]
         );
     }
+
 
     private function parseDescripcion(string $desc): array
     {
