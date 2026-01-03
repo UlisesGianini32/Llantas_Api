@@ -42,13 +42,19 @@
                     Llantas
                 </flux:navlist.item>
 
-                {{-- 🔴 LLANTAS AGOTADAS --}}
+                <flux:navlist.item
+                    :href="route('llantas.no_actualizadas')">
+                    ⚠️ Llantas no actualizadas
+                </flux:navlist.item>
+
+
+                {{-- LLANTAS AGOTADAS --}}
                 <flux:navlist.item
                     :href="route('llantas.agotadas')"
                     :current="request()->routeIs('llantas.agotadas')"
                     wire:navigate
                     class="text-red-400">
-                    🔴 Llantas agotadas
+                    Llantas agotadas
                 </flux:navlist.item>
 
                 {{-- PRODUCTOS COMPUESTOS --}}

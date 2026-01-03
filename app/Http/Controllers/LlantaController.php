@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Llanta;
 use App\Models\ProductoCompuesto;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
+
 
 class LlantaController extends Controller
 {
@@ -182,6 +184,26 @@ class LlantaController extends Controller
             ->withQueryString();
 
         return view('llantas.agotadas', compact('llantas'));
+    }
+
+        public function noActualizadasWeb()
+    {
+        $llantas = Llanta::whereNull('last_import_at')
+            ->orWhere('last_import_at', '<', Carbon::now()->subHours(12))
+            ->orderBy('sku')
+            ->paginate(20);
+
+        return view('llantas.no-actualizadas', compact('llantas'));
+    }
+    public function ponerStockCero()
+    {
+        Llanta::whereNull('last_import_at')
+            ->orWhere('last_import_at', '<', Carbon::now()->subHours(12))
+            ->update(['stock' => 0]);
+
+        return redirect()
+            ->route('llantas.no_actualizadas')
+            ->with('success', 'Stock puesto en 0 correctamente');
     }
 
 }

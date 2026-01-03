@@ -31,6 +31,13 @@ Route::middleware('auth')->group(function () {
     Route::get('/llantas/agotadas', [LlantaController::class, 'agotadasWeb'])
         ->name('llantas.agotadas');
 
+    Route::get('/llantas/no-actualizadas', [LlantaController::class, 'noActualizadasWeb'])
+        ->name('llantas.no_actualizadas');
+
+    Route::post('/llantas/no-actualizadas/poner-cero', [LlantaController::class, 'ponerStockCero'])
+        ->name('llantas.poner_cero');
+
+
     // ===============================
     // PRODUCTOS COMPUESTOS (WEB)
     // ===============================
