@@ -193,7 +193,7 @@ class LlantaController extends Controller
             ->orderBy('sku')
             ->paginate(20);
 
-        return view('llantas.no-actualizadas', compact('llantas'));
+        return view('llantas.no_actualizadas', compact('llantas'));
     }
     public function ponerStockCero()
     {
