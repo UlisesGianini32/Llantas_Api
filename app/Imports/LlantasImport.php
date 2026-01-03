@@ -12,10 +12,15 @@ class LlantasImport implements ToCollection
     public function collection(Collection $rows)
     {
         // ===============================
-        // 1. BUSCAR ENCABEZADO REAL
+        // 1. PONER TODO EL STOCK EN 0
+        // ===============================
+        Llanta::query()->update(['stock' => 0]);
+
+        // ===============================
+        // 2. BUSCAR ENCABEZADO REAL
         // ===============================
         while ($rows->count() > 0) {
-            $v = $this->cleanSku($rows->first()[0] ?? '');
+            $v = strtoupper(trim((string)($rows->first()[0] ?? '')));
             if ($v === 'CODIGO' || $v === 'CÓDIGO') break;
             $rows->shift();
         }
@@ -24,22 +29,19 @@ class LlantasImport implements ToCollection
         $rows->shift();
 
         // ===============================
-        // 2. GUARDAR SKUS DEL EXCEL
+        // 3. PROCESAR EXCEL
         // ===============================
-        $skusEnExcel = [];
-
         foreach ($rows as $row) {
 
-            $skuRaw = $row[0] ?? '';
-            $sku    = $this->cleanSku($skuRaw);
-
-            if ($sku === '') continue;
-
+            // Columnas reales del Excel
+            $sku   = $this->cleanSku($row[0] ?? '');
             $desc  = trim((string)($row[1] ?? ''));
             $stock = intval($row[2] ?? 0);
             $costo = floatval($row[3] ?? 0);
 
-            $skusEnExcel[] = $sku;
+            if ($sku === '') {
+                continue;
+            }
 
             [$marca, $medida] = $this->parseDescripcion($desc);
 
@@ -50,11 +52,9 @@ class LlantasImport implements ToCollection
             // ===============================
             if ($llanta) {
 
-                $precioAutoViejo = $llanta->costo * 1.5;
-                $precioActual    = $llanta->precio_ML;
-
-                $precioManual = !is_null($precioActual)
-                    && abs($precioActual - $precioAutoViejo) > 0.01;
+                $precioAuto = $llanta->costo * 1.5;
+                $precioManual = !is_null($llanta->precio_ML)
+                    && abs($llanta->precio_ML - $precioAuto) > 0.01;
 
                 $llanta->update([
                     'stock' => $stock,
@@ -88,27 +88,13 @@ class LlantasImport implements ToCollection
 
             $this->syncCompuestos($llanta);
         }
-
-        // ===============================
-        // 3. PONER EN 0 LOS QUE NO VINIERON
-        // ===============================
-        $skusEnExcel = array_unique($skusEnExcel);
-
-        Llanta::all()->each(function ($llanta) use ($skusEnExcel) {
-            if (!in_array($this->cleanSku($llanta->sku), $skusEnExcel)) {
-                if ($llanta->stock != 0) {
-                    $llanta->update(['stock' => 0]);
-                }
-            }
-        });
     }
 
     // ===============================
-    // CREA PAR Y JUEGO4 SIEMPRE
+    // COMPUESTOS (SIEMPRE)
     // ===============================
     private function syncCompuestos(Llanta $llanta): void
     {
-        // PAR
         ProductoCompuesto::updateOrCreate(
             ['llanta_id' => $llanta->id, 'tipo' => 'par'],
             [
@@ -121,7 +107,6 @@ class LlantasImport implements ToCollection
             ]
         );
 
-        // JUEGO4
         ProductoCompuesto::updateOrCreate(
             ['llanta_id' => $llanta->id, 'tipo' => 'juego4'],
             [
@@ -136,7 +121,7 @@ class LlantasImport implements ToCollection
     }
 
     // ===============================
-    // LIMPIADOR DEFINITIVO DE SKU
+    // LIMPIAR SKU (EXCEL REAL)
     // ===============================
     private function cleanSku($value): string
     {
@@ -148,7 +133,7 @@ class LlantasImport implements ToCollection
     }
 
     // ===============================
-    // PARSER DESCRIPCIÓN
+    // PARSEAR DESCRIPCIÓN
     // ===============================
     private function parseDescripcion(string $desc): array
     {
