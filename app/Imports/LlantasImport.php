@@ -47,8 +47,9 @@ class LlantasImport implements ToCollection
                     && abs($precioActual - $precioAutoViejo) > 0.01;
 
                 $llanta->update([
-                    'stock' => $stock,
-                    'costo' => $costo,
+                    'stock'          => $stock,
+                    'costo'          => $costo,
+                    'last_import_at' => now(), // ✅ AQUÍ
                 ]);
 
                 if (!$precioManual) {
@@ -74,6 +75,7 @@ class LlantasImport implements ToCollection
                 'precio_ML'        => $costo * 1.5,
                 'title_familyname' => "$marca $medida",
                 'MLM'              => null,
+                'last_import_at'   => now(), // ✅ AQUÍ
             ]);
 
             $this->syncCompuestos($llanta);
@@ -138,7 +140,6 @@ class LlantasImport implements ToCollection
             ]
         );
     }
-
 
     private function parseDescripcion(string $desc): array
     {
